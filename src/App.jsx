@@ -21,10 +21,10 @@ function Puzzle({ category, onChangeGenre }) {
     function handleKeyDown(event) {
       const key = event.key
 
-      if (key === 'ArrowRight' || key === ' ') {
+      if (key === 'ArrowRight' || key === 'ArrowDown' || key === ' ') {
         event.preventDefault()
         game.moveNext()
-      } else if (key === 'ArrowLeft') {
+      } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
         event.preventDefault()
         game.movePrev()
       } else if (key === 'Backspace' || key === 'Delete') {

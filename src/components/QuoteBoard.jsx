@@ -39,7 +39,13 @@ function QuoteBoard({ ciphertext, guesses, selectedPosition, selectedCipherLette
                     isSelected ? 'quote-tile-selected' : '',
                     isRelated ? 'quote-tile-related' : '',
                   ].filter(Boolean).join(' ')}
-                  onClick={() => onSelectPosition(index)}
+                  onClick={(event) => {
+                    onSelectPosition(index)
+                    // See Legend.jsx's identical blur - a focused <button>
+                    // has native Space/Arrow-key behavior that can fight
+                    // the global keyboard navigation handler otherwise.
+                    event.currentTarget.blur()
+                  }}
                 >
                   <span className="quote-tile-guess">{guessed || ' '}</span>
                   <span className="quote-tile-cipher">{char}</span>

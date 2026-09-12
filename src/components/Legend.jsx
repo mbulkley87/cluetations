@@ -20,7 +20,15 @@ function Legend({ ciphertext, guesses, selectedCipherLetter, onSelectCipherLette
             'legend-cell',
             cipherLetter === selectedCipherLetter ? 'legend-cell-selected' : '',
           ].filter(Boolean).join(' ')}
-          onClick={() => onSelectCipherLetter(cipherLetter)}
+          onClick={(event) => {
+            onSelectCipherLetter(cipherLetter)
+            // A focused <button> has its own native Space/Arrow-key
+            // behavior that can fight the global keyboard navigation
+            // handler even with preventDefault() there - blurring it right
+            // after the click leaves nothing focused to intercept those
+            // keys afterward.
+            event.currentTarget.blur()
+          }}
         >
           <span className="legend-guess">{guesses[cipherLetter] || ' '}</span>
           <span className="legend-cipher">{cipherLetter}</span>
