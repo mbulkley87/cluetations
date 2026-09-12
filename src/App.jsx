@@ -4,6 +4,7 @@ import GenreSelect from './components/GenreSelect'
 import QuoteBoard from './components/QuoteBoard'
 import Legend from './components/Legend'
 import Controls from './components/Controls'
+import AnswerBox from './components/AnswerBox'
 import SolvedReveal from './components/SolvedReveal'
 import DebugPanel from './components/DebugPanel'
 import useCryptogram from './hooks/useCryptogram'
@@ -13,7 +14,12 @@ function Puzzle({ category, onChangeGenre }) {
   const [puzzle, setPuzzle] = useState(() => pickRandomPuzzle(category))
   const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
+  const [hintMode, setHintMode] = useState(false)
   const solved = feedback?.kind === 'correct'
+  // Only ever shown while the decode is CURRENTLY correct - if the player
+  // undoes back out of a correct decode after reaching this step, the box
+  // disappears until they fix the decode and submit again.
+  const showAnswerBox = feedback?.kind !== 'correct' && feedback?.awaitingPerson && game.isCorrect
 
   useEffect(() => {
     if (solved) return undefined
@@ -30,6 +36,9 @@ function Puzzle({ category, onChangeGenre }) {
       } else if (key === 'Backspace' || key === 'Delete') {
         event.preventDefault()
         game.deleteAndMoveBack()
+      } else if (key === 'Escape' && hintMode) {
+        event.preventDefault()
+        setHintMode(false)
       } else if (/^[a-zA-Z]$/.test(key)) {
         event.preventDefault()
         game.typeLetter(key.toUpperCase())
@@ -38,23 +47,60 @@ function Puzzle({ category, onChangeGenre }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [game, solved])
+  }, [game, solved, hintMode])
+
+  function handleSelectPosition(position) {
+    if (hintMode) {
+      game.revealHint(game.ciphertext[position])
+      setHintMode(false)
+      return
+    }
+    game.selectPosition(position)
+  }
+
+  function handleSelectCipherLetter(cipherLetter) {
+    if (hintMode) {
+      game.revealHint(cipherLetter)
+      setHintMode(false)
+      return
+    }
+    game.selectCipherLetter(cipherLetter)
+  }
 
   function handleSubmit() {
     if (!game.isComplete) {
       setFeedback({ kind: 'incomplete', message: 'Fill in every letter before submitting.' })
       return
     }
+    if (!game.isCorrect) {
+      setFeedback({ kind: 'incorrect', message: 'Not quite right - keep at it.' })
+      return
+    }
+    // Decode is correct - last step is naming the source, which the
+    // AnswerBox handles. awaitingPerson isn't a real "kind" (no banner of
+    // its own renders for it), just the flag showAnswerBox reads.
+    setFeedback({ awaitingPerson: true })
+  }
+
+  function handleCheckPersonAnswer(guess) {
+    const isRightPerson = guess.trim().toLowerCase() === puzzle.person.trim().toLowerCase()
     setFeedback(
-      game.isCorrect
-        ? { kind: 'correct', message: 'Solved it - nicely done!' }
-        : { kind: 'incorrect', message: 'Not quite right - keep at it.' }
+      isRightPerson
+        ? { kind: 'correct' }
+        : { kind: 'wrong-person', message: "That's not who said it - try again.", awaitingPerson: true }
     )
   }
 
   function handleNewQuote() {
     setFeedback(null)
+    setHintMode(false)
     setPuzzle((current) => pickRandomPuzzle(category, current.id))
+  }
+
+  function handleReset() {
+    setFeedback(null)
+    setHintMode(false)
+    game.reset()
   }
 
   return (
@@ -86,28 +132,37 @@ function Puzzle({ category, onChangeGenre }) {
         />
       ) : (
         <>
+          {hintMode && (
+            <div className="hint-banner">Which letter do you want? Click any letter to reveal it.</div>
+          )}
+
           <QuoteBoard
             ciphertext={game.ciphertext}
             guesses={game.guesses}
             selectedPosition={game.selectedPosition}
             selectedCipherLetter={game.selectedCipherLetter}
-            onSelectPosition={game.selectPosition}
+            onSelectPosition={handleSelectPosition}
           />
 
           <Legend
             ciphertext={game.ciphertext}
+            distinctCipherLetters={game.distinctCipherLetters}
             guesses={game.guesses}
             selectedCipherLetter={game.selectedCipherLetter}
-            onSelectCipherLetter={game.selectCipherLetter}
+            onSelectCipherLetter={handleSelectCipherLetter}
           />
 
           <Controls
             canUndo={game.canUndo}
             onUndo={game.undo}
-            onReset={() => { setFeedback(null); game.reset() }}
+            onReset={handleReset}
             onSubmit={handleSubmit}
-            feedback={feedback}
+            onHint={() => setHintMode((current) => !current)}
+            hintActive={hintMode}
+            feedback={feedback?.kind && feedback.kind !== 'correct' ? feedback : null}
           />
+
+          {showAnswerBox && <AnswerBox onCheck={handleCheckPersonAnswer} />}
         </>
       )}
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { normalizePersonName, buildCipherAlphabet, encryptQuote } from './cipher'
+import { normalizePersonName, buildCipherAlphabet, buildReverseCipherAlphabet, encryptQuote } from './cipher'
 
 describe('normalizePersonName', () => {
   test('uppercases and strips spaces', () => {
@@ -56,6 +56,17 @@ describe('buildCipherAlphabet - general properties', () => {
   test('is deterministic - same name always produces the same cipher', () => {
     expect(buildCipherAlphabet('Tom Hanks')).toEqual(buildCipherAlphabet('Tom Hanks'))
     expect(buildCipherAlphabet('Tom Hanks')).toEqual(buildCipherAlphabet('TOM HANKS'))
+  })
+})
+
+describe('buildReverseCipherAlphabet', () => {
+  test('is the exact inverse of buildCipherAlphabet - powers the hint feature', () => {
+    const forward = buildCipherAlphabet('Dolly Parton')
+    const reverse = buildReverseCipherAlphabet('Dolly Parton')
+    for (const [plainLetter, cipherLetter] of Object.entries(forward)) {
+      expect(reverse[cipherLetter]).toBe(plainLetter)
+    }
+    expect(Object.keys(reverse).sort()).toEqual('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').sort())
   })
 })
 

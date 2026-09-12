@@ -205,7 +205,7 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  width: 38px;
+  width: 48px;
   padding: 6px 0;
   border-radius: 8px;
   border: 2px solid rgba(255, 255, 255, 0.1);
@@ -222,10 +222,22 @@
   color: #ffd166;
 }
 
+.legend-cipher-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
 .legend-cipher {
   font-size: 11px;
   font-weight: 700;
   color: #6d7382;
+}
+
+.legend-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: #4a5063;
 }
 
 .legend-cell-selected {
@@ -303,6 +315,12 @@
   background: rgba(255, 209, 102, 0.15);
   color: #ffe2a6;
   border: 1px solid rgba(255, 209, 102, 0.4);
+}
+
+.controls-feedback-wrong-person {
+  background: rgba(239, 71, 111, 0.15);
+  color: #ffb6c6;
+  border: 1px solid rgba(239, 71, 111, 0.4);
 }
 
 @media (max-width: 480px) {
@@ -396,4 +414,72 @@
   letter-spacing: 0.12em;
   white-space: nowrap;
   overflow-x: auto;
+}
+
+/* ======================================================
+   HINT
+====================================================== */
+
+.control-button-hint {
+  border-color: rgba(255, 209, 102, 0.5);
+}
+
+.control-button-hint-active {
+  border-color: #ffd166;
+  background: rgba(255, 209, 102, 0.22);
+  color: #ffd166;
+}
+
+.hint-banner {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 209, 102, 0.5);
+  background: rgba(255, 209, 102, 0.12);
+  color: #ffe2a6;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ======================================================
+   ANSWER BOX (person-name guess, shown once the quote itself
+   decodes correctly)
+====================================================== */
+
+.answer-box {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.answer-box-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a4f0be;
+}
+
+.answer-box-row {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.answer-box-input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e7e9ee;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.answer-box-input:focus {
+  outline: none;
+  border-color: #ffd166;
 }

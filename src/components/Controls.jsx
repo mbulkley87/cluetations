@@ -1,4 +1,4 @@
-function Controls({ canUndo, onUndo, onReset, onSubmit, feedback }) {
+function Controls({ canUndo, onUndo, onReset, onSubmit, onHint, hintActive, feedback }) {
   return (
     <div className="controls">
       <div className="controls-buttons">
@@ -7,6 +7,13 @@ function Controls({ canUndo, onUndo, onReset, onSubmit, feedback }) {
         </button>
         <button type="button" className="control-button" onClick={onReset}>
           ↻ Reset
+        </button>
+        <button
+          type="button"
+          className={['control-button', 'control-button-hint', hintActive ? 'control-button-hint-active' : ''].filter(Boolean).join(' ')}
+          onClick={onHint}
+        >
+          💡 Hint
         </button>
         <button type="button" className="control-button control-button-submit" onClick={onSubmit}>
           Submit

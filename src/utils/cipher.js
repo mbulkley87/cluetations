@@ -53,6 +53,18 @@ export function buildCipherAlphabet(person) {
   return cipher
 }
 
+// The inverse of buildCipherAlphabet - cipher letter -> correct plain
+// letter. This is what powers the hint feature (reveal the true answer
+// for one cipher letter) without duplicating the cipher-derivation logic.
+export function buildReverseCipherAlphabet(person) {
+  const cipher = buildCipherAlphabet(person)
+  const reverse = {}
+  for (const [plainLetter, cipherLetter] of Object.entries(cipher)) {
+    reverse[cipherLetter] = plainLetter
+  }
+  return reverse
+}
+
 // Only A-Z gets substituted - spaces, punctuation, and apostrophes pass
 // through untouched so word shape stays visible (that's what makes
 // frequency/pattern analysis possible at all).
