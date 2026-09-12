@@ -1,4 +1,4 @@
-import { GENRES, GENRE_LABELS } from '../data/quotes'
+import { CATEGORIES, CATEGORY_LABELS } from '../data/puzzles'
 
 function GenreSelect({ onChoose }) {
   return (
@@ -6,9 +6,9 @@ function GenreSelect({ onChoose }) {
       <h1 className="game-title">ClueTations</h1>
       <p className="game-subtitle">Crack the quote. Pick where it's from.</p>
       <div className="genre-grid">
-        {GENRES.map((genre) => (
-          <button key={genre} className="genre-button" onClick={() => onChoose(genre)}>
-            {GENRE_LABELS[genre]}
+        {CATEGORIES.map((category) => (
+          <button key={category} className="genre-button" onClick={() => onChoose(category)}>
+            {CATEGORY_LABELS[category]}
           </button>
         ))}
       </div>

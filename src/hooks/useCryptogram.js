@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
-import { generateCipher, encode, isLetter } from '../utils/cipher'
+import { encryptQuote, isLetter } from '../utils/cipher'
 
-// One playthrough of a single quote: the plaintext, its cipher, and every
-// piece of state a player can change while solving it (guesses, which tile
-// is selected, and an undo history of past guess states).
-function useCryptogram(plaintext) {
-  const [cipher] = useState(() => generateCipher())
-  const ciphertext = useMemo(() => encode(plaintext, cipher), [plaintext, cipher])
+// One playthrough of a single puzzle: the plaintext, its cipher (derived
+// from the person's name - see src/utils/cipher.js), and every piece of
+// state a player can change while solving it (guesses, which tile is
+// selected, and an undo history of past guess states).
+function useCryptogram(plaintext, person) {
+  const ciphertext = useMemo(() => encryptQuote(plaintext, person), [plaintext, person])
   const upperPlaintext = useMemo(() => plaintext.toUpperCase(), [plaintext])
 
   // Every character index that's an actual letter (spaces/punctuation are
@@ -39,9 +39,22 @@ function useCryptogram(plaintext) {
     if (firstIndex !== -1) setSelectedPosition(firstIndex)
   }, [ciphertext])
 
+  // A substitution must stay one-to-one: assigning a plaintext letter to a
+  // cipher letter silently drops that same plaintext letter from whichever
+  // other cipher letter it was previously attached to, so two cipher
+  // letters are never simultaneously decoded as the same guess. Both the
+  // new assignment and the collision cleanup count as a single undo step.
   const setGuess = useCallback((cipherLetter, plainLetter) => {
     pushHistory()
-    setGuesses((current) => ({ ...current, [cipherLetter]: plainLetter }))
+    setGuesses((current) => {
+      const next = {}
+      for (const [existingCipherLetter, existingPlainLetter] of Object.entries(current)) {
+        if (existingPlainLetter === plainLetter && existingCipherLetter !== cipherLetter) continue
+        next[existingCipherLetter] = existingPlainLetter
+      }
+      next[cipherLetter] = plainLetter
+      return next
+    })
   }, [pushHistory])
 
   const clearGuess = useCallback((cipherLetter) => {
@@ -107,6 +120,8 @@ function useCryptogram(plaintext) {
     [letterPositions, guesses, ciphertext]
   )
 
+  // Case is ignored deliberately - both sides are already uppercased, this
+  // just documents that submit is a case-insensitive comparison per spec.
   const isCorrect = useMemo(() => guessedText === upperPlaintext, [guessedText, upperPlaintext])
 
   return {

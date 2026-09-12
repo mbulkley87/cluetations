@@ -1,32 +1,64 @@
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
-function shuffle(array) {
-  const arr = [...array]
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr
+// Uppercase, letters only - strips spaces, punctuation, apostrophes, and
+// hyphens so "J.R.R. Tolkien" and "Martin Luther King Jr." reduce to a
+// clean run of A-Z before the cipher is derived from them.
+export function normalizePersonName(person) {
+  return person.toUpperCase().replace(/[^A-Z]/g, '')
 }
 
-// A derangement (no letter encodes to itself) and a full 1:1 bijection -
-// every ciphertext letter maps back to exactly one plaintext letter, which
-// is what makes "guess this cipher letter everywhere at once" meaningful.
-export function generateCipher() {
-  let shuffled
-  do {
-    shuffled = shuffle(ALPHABET)
-  } while (shuffled.some((letter, index) => letter === ALPHABET[index]))
+// The substitution alphabet for a puzzle is deterministic, derived from
+// the person's name rather than randomized - the same person always
+// produces the same cipher.
+//
+// 1. Normalize the name.
+// 2. Walk it left to right, keeping each letter only the first time it
+//    appears - this becomes the start of the cipher sequence.
+// 3. Append every letter NOT used in step 2, in reverse alphabetical
+//    order (Z down to A).
+// 4. Map plain A-Z (in order) to that 26-letter sequence position by
+//    position.
+//
+// Worked example - DOLLY PARTON:
+//   normalized:  DOLLYPARTON
+//   unique run:  D O L Y P A R T N        (second L, second O are skipped)
+//   unused, Z->A: Z X W V U S Q M K J I H T F E C B G ... filtered down to
+//                 just the letters not already used: Z X W V U S Q M K J I H G F E C B
+//   full sequence: D O L Y P A R T N Z X W V U S Q M K J I H G F E C B
+//   so A->D, B->O, C->L, D->Y, E->P, F->A, G->R, H->T, I->N, J->Z, ...
+export function buildCipherAlphabet(person) {
+  const normalized = normalizePersonName(person)
+
+  const seen = new Set()
+  const uniqueLetters = []
+  for (const char of normalized) {
+    if (!seen.has(char)) {
+      seen.add(char)
+      uniqueLetters.push(char)
+    }
+  }
+
+  const unusedReversed = []
+  for (let i = ALPHABET.length - 1; i >= 0; i--) {
+    const letter = ALPHABET[i]
+    if (!seen.has(letter)) unusedReversed.push(letter)
+  }
+
+  const cipherSequence = [...uniqueLetters, ...unusedReversed]
 
   const cipher = {}
   ALPHABET.forEach((letter, index) => {
-    cipher[letter] = shuffled[index]
+    cipher[letter] = cipherSequence[index]
   })
   return cipher
 }
 
-export function encode(text, cipher) {
-  return text
+// Only A-Z gets substituted - spaces, punctuation, and apostrophes pass
+// through untouched so word shape stays visible (that's what makes
+// frequency/pattern analysis possible at all).
+export function encryptQuote(quote, person) {
+  const cipher = buildCipherAlphabet(person)
+  return quote
     .toUpperCase()
     .split('')
     .map((char) => (/[A-Z]/.test(char) ? cipher[char] : char))

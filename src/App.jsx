@@ -4,15 +4,20 @@ import GenreSelect from './components/GenreSelect'
 import QuoteBoard from './components/QuoteBoard'
 import Legend from './components/Legend'
 import Controls from './components/Controls'
+import SolvedReveal from './components/SolvedReveal'
+import DebugPanel from './components/DebugPanel'
 import useCryptogram from './hooks/useCryptogram'
-import { GENRE_LABELS, randomQuoteFor } from './data/quotes'
+import { CATEGORY_LABELS, pickRandomPuzzle } from './data/puzzles'
 
-function Puzzle({ genre, onChangeGenre }) {
-  const [quote, setQuote] = useState(() => randomQuoteFor(genre))
-  const game = useCryptogram(quote)
+function Puzzle({ category, onChangeGenre }) {
+  const [puzzle, setPuzzle] = useState(() => pickRandomPuzzle(category))
+  const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
+  const solved = feedback?.kind === 'correct'
 
   useEffect(() => {
+    if (solved) return undefined
+
     function handleKeyDown(event) {
       const key = event.key
 
@@ -33,7 +38,7 @@ function Puzzle({ genre, onChangeGenre }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [game])
+  }, [game, solved])
 
   function handleSubmit() {
     if (!game.isComplete) {
@@ -49,60 +54,76 @@ function Puzzle({ genre, onChangeGenre }) {
 
   function handleNewQuote() {
     setFeedback(null)
-    setQuote(randomQuoteFor(genre))
+    setPuzzle((current) => pickRandomPuzzle(category, current.id))
   }
 
   return (
-    // Remounting on quote change is deliberate - useCryptogram seeds its
-    // cipher once per mount, so a new quote needs a fresh instance rather
-    // than trying to reset an existing one in place.
-    <div className="puzzle-screen" key={quote}>
+    // Remounting on puzzle change is deliberate - useCryptogram derives its
+    // cipher fresh from person/quote, so a new puzzle needs a fresh
+    // instance rather than trying to reset an existing one in place.
+    <div className="puzzle-screen" key={puzzle.id}>
       <div className="puzzle-header">
-        <span className="puzzle-genre">{GENRE_LABELS[genre]}</span>
-        <div className="puzzle-header-actions">
-          <button type="button" className="text-button" onClick={handleNewQuote}>
-            New Quote
-          </button>
-          <button type="button" className="text-button" onClick={onChangeGenre}>
-            Change Genre
-          </button>
-        </div>
+        <span className="puzzle-genre">{CATEGORY_LABELS[category]}</span>
+        {!solved && (
+          <div className="puzzle-header-actions">
+            <button type="button" className="text-button" onClick={handleNewQuote}>
+              New Quote
+            </button>
+            <button type="button" className="text-button" onClick={onChangeGenre}>
+              Change Genre
+            </button>
+          </div>
+        )}
       </div>
 
-      <QuoteBoard
-        ciphertext={game.ciphertext}
-        guesses={game.guesses}
-        selectedPosition={game.selectedPosition}
-        selectedCipherLetter={game.selectedCipherLetter}
-        onSelectPosition={game.selectPosition}
-      />
+      {solved ? (
+        <SolvedReveal
+          quote={puzzle.quote}
+          person={puzzle.person}
+          work={puzzle.work}
+          onNewQuote={handleNewQuote}
+          onChangeGenre={onChangeGenre}
+        />
+      ) : (
+        <>
+          <QuoteBoard
+            ciphertext={game.ciphertext}
+            guesses={game.guesses}
+            selectedPosition={game.selectedPosition}
+            selectedCipherLetter={game.selectedCipherLetter}
+            onSelectPosition={game.selectPosition}
+          />
 
-      <Legend
-        ciphertext={game.ciphertext}
-        guesses={game.guesses}
-        selectedCipherLetter={game.selectedCipherLetter}
-        onSelectCipherLetter={game.selectCipherLetter}
-      />
+          <Legend
+            ciphertext={game.ciphertext}
+            guesses={game.guesses}
+            selectedCipherLetter={game.selectedCipherLetter}
+            onSelectCipherLetter={game.selectCipherLetter}
+          />
 
-      <Controls
-        canUndo={game.canUndo}
-        onUndo={game.undo}
-        onReset={() => { setFeedback(null); game.reset() }}
-        onSubmit={handleSubmit}
-        feedback={feedback}
-      />
+          <Controls
+            canUndo={game.canUndo}
+            onUndo={game.undo}
+            onReset={() => { setFeedback(null); game.reset() }}
+            onSubmit={handleSubmit}
+            feedback={feedback}
+          />
+        </>
+      )}
+
+      {import.meta.env.DEV && <DebugPanel person={puzzle.person} />}
     </div>
   )
 }
 
 function App() {
-  const [genre, setGenre] = useState(null)
+  const [category, setCategory] = useState(null)
 
-  if (!genre) {
-    return <GenreSelect onChoose={setGenre} />
+  if (!category) {
+    return <GenreSelect onChoose={setCategory} />
   }
 
-  return <Puzzle genre={genre} onChangeGenre={() => setGenre(null)} />
+  return <Puzzle category={category} onChangeGenre={() => setCategory(null)} />
 }
 
 export default App
