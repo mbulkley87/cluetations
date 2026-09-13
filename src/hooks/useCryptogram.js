@@ -1,23 +1,31 @@
 import { useCallback, useMemo, useState } from 'react'
-import { encryptQuote, buildReverseCipherAlphabet, isLetter, ALPHABET } from '../utils/cipher'
+import { encryptQuote, buildCipherAlphabet, buildReverseCipherAlphabet, normalizePersonName, isLetter, ALPHABET } from '../utils/cipher'
 
 // One playthrough of a single puzzle: the plaintext, its cipher (derived
 // from the person's name - see src/utils/cipher.js), and every piece of
 // state a player can change while solving it (guesses, which tile is
 // selected, and an undo history of past guess states).
+//
+// guesses is always stored cipherLetter -> guessed plaintext letter, since
+// that's what the quote board needs (it shows cipher letters and the
+// player fills in plain-letter guesses). The Legend is the mirror image of
+// that same data: it's indexed by the PLAIN alphabet A-Z (fixed, always
+// visible - not secret) and shows whichever cipher letter the player has
+// resolved for each, which is exactly plainToCipher below, computed by
+// inverting guesses. Selecting a Legend cell and typing a letter still
+// writes into the same guesses map, just entering the cipher-letter side
+// of the pair instead of the plain-letter side - see typeLetter.
 function useCryptogram(plaintext, person) {
   const ciphertext = useMemo(() => encryptQuote(plaintext, person), [plaintext, person])
   const upperPlaintext = useMemo(() => plaintext.toUpperCase(), [plaintext])
+  const forwardCipher = useMemo(() => buildCipherAlphabet(person), [person])
   const reverseCipher = useMemo(() => buildReverseCipherAlphabet(person), [person])
 
-  // The legend lists cipher letters in plain A-Z order, NOT the order they
-  // were assigned in (buildCipherSequence). That assignment order starts
-  // with the person's own name, so listing the legend in that order would
-  // let a player solve the puzzle by just typing the alphabet straight
-  // through (cipherSequence[i] is always the encryption of plain letter
-  // i). Since every cipher letter is a permutation of A-Z, "sorted by the
-  // cipher letter itself" is just the alphabet, unrelated to the person.
-  const legendLetters = ALPHABET
+  // How many of the person's own unique letters lead the cipher sequence -
+  // plain letters before this count are "the name" (their cipher letter is
+  // part of what the player is meant to discover), plain letters from here
+  // to Z are just the mechanical reverse-alphabet remainder. Powers "Fill".
+  const nameLetterCount = useMemo(() => new Set(normalizePersonName(person)).size, [person])
 
   // Every character index that's an actual letter (spaces/punctuation are
   // shown as-is and never selectable) - this is the order arrow keys/space
@@ -32,22 +40,44 @@ function useCryptogram(plaintext, person) {
 
   // Quote-mode selection is a POSITION (so repeated letters in the quote
   // are each their own stop while stepping through it). Legend-mode
-  // selection is a CIPHER LETTER directly, since most of the legend's 26
-  // entries have no position in the quote at all. navigationMode says
-  // which one is currently "live" - whichever area was last clicked.
+  // selection is a PLAIN letter (the Legend's fixed A-Z index). navigationMode
+  // says which one is currently "live" - whichever area was last clicked.
   const [selectedPosition, setSelectedPosition] = useState(letterPositions[0] ?? null)
   const [selectedLegendLetter, setSelectedLegendLetter] = useState(null)
   const [navigationMode, setNavigationMode] = useState('quote') // 'quote' | 'legend'
 
+  // guesses inverted (plainLetter -> cipherLetter) - what the Legend
+  // displays per cell, and only ever contains letters the player has
+  // actually resolved (never leaks anything unsolved).
+  const plainToCipher = useMemo(() => {
+    const map = {}
+    for (const [cipherLetter, plainLetter] of Object.entries(guesses)) {
+      map[plainLetter] = cipherLetter
+    }
+    return map
+  }, [guesses])
+
+  // The cipher letter "in play" for whichever cell is currently selected -
+  // in quote mode that's just the ciphertext character under the cursor;
+  // in legend mode it's whatever cipher letter (if any) has been resolved
+  // for the selected plain letter. This is what drives the quote board's
+  // "highlight every tile sharing this letter" effect either way.
   const selectedCipherLetter = navigationMode === 'legend'
-    ? selectedLegendLetter
+    ? (selectedLegendLetter === null ? null : (plainToCipher[selectedLegendLetter] ?? null))
     : (selectedPosition === null ? null : ciphertext[selectedPosition])
 
+  // Which Legend cell (if any) should show the "you clicked exactly this
+  // one" highlight - in quote mode that's whichever plain letter the
+  // selected cipher letter currently resolves to (nothing, if unsolved).
+  const highlightedPlainLetter = navigationMode === 'legend'
+    ? selectedLegendLetter
+    : (selectedCipherLetter === null ? null : (guesses[selectedCipherLetter] ?? null))
+
   // Which quote tile (if any) gets the solid "you clicked exactly this
-  // one" highlight - in legend mode that's the selected letter's first
-  // appearance in the quote, or none at all if it doesn't appear there.
+  // one" highlight - in legend mode that's the resolved cipher letter's
+  // first appearance in the quote, or none if it isn't resolved yet.
   const highlightPosition = navigationMode === 'legend'
-    ? (selectedLegendLetter === null ? null : ciphertext.indexOf(selectedLegendLetter))
+    ? (selectedCipherLetter === null ? null : ciphertext.indexOf(selectedCipherLetter))
     : selectedPosition
 
   const pushHistory = useCallback(() => {
@@ -59,9 +89,9 @@ function useCryptogram(plaintext, person) {
     setSelectedPosition(position)
   }, [])
 
-  const selectCipherLetter = useCallback((cipherLetter) => {
+  const selectLegendLetter = useCallback((plainLetter) => {
     setNavigationMode('legend')
-    setSelectedLegendLetter(cipherLetter)
+    setSelectedLegendLetter(plainLetter)
   }, [])
 
   // A substitution must stay one-to-one: assigning a plaintext letter to a
@@ -91,21 +121,45 @@ function useCryptogram(plaintext, person) {
     })
   }, [pushHistory])
 
-  // Reveals the true answer for one cipher letter (the "Gimme" feature) -
-  // routed through setGuess so it's undo-able and still respects the
-  // one-to-one constraint like any other guess.
+  // Reveals the true plain letter for one cipher letter (the "Gimme"
+  // feature, used from the quote board) - routed through setGuess so it's
+  // undo-able and still respects the one-to-one constraint.
   const revealHint = useCallback((cipherLetter) => {
     const correctPlainLetter = reverseCipher[cipherLetter]
     if (correctPlainLetter) setGuess(cipherLetter, correctPlainLetter)
   }, [reverseCipher, setGuess])
 
+  // The mirror of revealHint, for Gimme used from the Legend: reveals the
+  // true cipher letter for one plain letter.
+  const revealPlainLetter = useCallback((plainLetter) => {
+    const correctCipherLetter = forwardCipher[plainLetter]
+    if (correctCipherLetter) setGuess(correctCipherLetter, plainLetter)
+  }, [forwardCipher, setGuess])
+
+  // Instantly fills in every plain letter that ISN'T part of the person's
+  // name - those are just the mechanical reverse-alphabet remainder of the
+  // cipher, not something worth making the player grind through letter by
+  // letter. The name's own letters are deliberately left alone, since
+  // discovering those (by actually decoding the quote) is the point.
+  const fillRemaining = useCallback(() => {
+    pushHistory()
+    setGuesses((current) => {
+      const next = { ...current }
+      for (let i = nameLetterCount; i < ALPHABET.length; i++) {
+        const plainLetter = ALPHABET[i]
+        next[forwardCipher[plainLetter]] = plainLetter
+      }
+      return next
+    })
+  }, [pushHistory, nameLetterCount, forwardCipher])
+
   const moveBy = useCallback((delta) => {
     if (navigationMode === 'legend') {
       setSelectedLegendLetter((current) => {
-        const currentIndex = legendLetters.indexOf(current)
+        const currentIndex = ALPHABET.indexOf(current)
         const baseIndex = currentIndex === -1 ? 0 : currentIndex
-        const nextIndex = Math.min(Math.max(baseIndex + delta, 0), legendLetters.length - 1)
-        return legendLetters[nextIndex]
+        const nextIndex = Math.min(Math.max(baseIndex + delta, 0), ALPHABET.length - 1)
+        return ALPHABET[nextIndex]
       })
       return
     }
@@ -118,46 +172,63 @@ function useCryptogram(plaintext, person) {
       if (nextIndex >= letterPositions.length) return letterPositions[letterPositions.length - 1] ?? null
       return letterPositions[nextIndex]
     })
-  }, [navigationMode, legendLetters, letterPositions])
+  }, [navigationMode, letterPositions])
 
   const moveNext = useCallback(() => moveBy(1), [moveBy])
   const movePrev = useCallback(() => moveBy(-1), [moveBy])
 
   // Typing a letter advances to the next EMPTY box, not just the next one -
-  // otherwise stepping past a cipher letter that's already been solved
-  // (including other occurrences of the very letter just typed) means
-  // retyping over it instead of moving on. This computes the new guesses
-  // synchronously (rather than reading the `guesses` state, which won't
-  // reflect this update until the next render) so the very letter just
-  // assigned - and any other position sharing that cipher letter - is
-  // correctly treated as filled when picking where to jump next.
-  const typeLetter = useCallback((plainLetter) => {
-    if (selectedCipherLetter === null) return
-
-    pushHistory()
-    let nextGuesses
-    setGuesses((current) => {
-      const next = {}
-      for (const [existingCipherLetter, existingPlainLetter] of Object.entries(current)) {
-        if (existingPlainLetter === plainLetter && existingCipherLetter !== selectedCipherLetter) continue
-        next[existingCipherLetter] = existingPlainLetter
-      }
-      next[selectedCipherLetter] = plainLetter
-      nextGuesses = next
-      return next
-    })
-
+  // otherwise stepping past a letter that's already been solved means
+  // retyping over it instead of moving on. nextGuesses is computed directly
+  // from the `guesses` closure value (not read back out of the setGuesses
+  // updater's `current` param) - React does not guarantee that updater
+  // runs synchronously, so a value assigned inside it can still be
+  // undefined immediately after the call. Computing it here instead is
+  // fully deterministic; `guesses` is in the dependency array so this
+  // never reads a stale value.
+  //
+  // The two modes type in OPPOSITE directions: in quote mode the typed key
+  // is a PLAIN letter guess for the fixed cipher letter under the cursor;
+  // in legend mode the typed key is a CIPHER letter for the fixed plain
+  // letter selected in the Legend. Both ultimately produce the same shape
+  // of (cipherLetter -> plainLetter) map either way.
+  const typeLetter = useCallback((typedLetter) => {
     if (navigationMode === 'legend') {
+      if (selectedLegendLetter === null) return
+
+      const nextGuesses = {}
+      for (const [existingCipherLetter, existingPlainLetter] of Object.entries(guesses)) {
+        if (existingPlainLetter === selectedLegendLetter && existingCipherLetter !== typedLetter) continue
+        nextGuesses[existingCipherLetter] = existingPlainLetter
+      }
+      nextGuesses[typedLetter] = selectedLegendLetter
+
+      pushHistory()
+      setGuesses(nextGuesses)
+
+      const resolvedPlainLetters = new Set(Object.values(nextGuesses))
       setSelectedLegendLetter((current) => {
-        const currentIndex = legendLetters.indexOf(current)
+        const currentIndex = ALPHABET.indexOf(current)
         const baseIndex = currentIndex === -1 ? 0 : currentIndex
-        for (let i = baseIndex + 1; i < legendLetters.length; i++) {
-          if (!nextGuesses[legendLetters[i]]) return legendLetters[i]
+        for (let i = baseIndex + 1; i < ALPHABET.length; i++) {
+          if (!resolvedPlainLetters.has(ALPHABET[i])) return ALPHABET[i]
         }
-        return legendLetters[legendLetters.length - 1]
+        return ALPHABET[ALPHABET.length - 1]
       })
       return
     }
+
+    if (selectedCipherLetter === null) return
+
+    const nextGuesses = {}
+    for (const [existingCipherLetter, existingPlainLetter] of Object.entries(guesses)) {
+      if (existingPlainLetter === typedLetter && existingCipherLetter !== selectedCipherLetter) continue
+      nextGuesses[existingCipherLetter] = existingPlainLetter
+    }
+    nextGuesses[selectedCipherLetter] = typedLetter
+
+    pushHistory()
+    setGuesses(nextGuesses)
 
     setSelectedPosition((current) => {
       const currentIndex = letterPositions.indexOf(current)
@@ -168,7 +239,7 @@ function useCryptogram(plaintext, person) {
       }
       return letterPositions[letterPositions.length - 1] ?? null
     })
-  }, [selectedCipherLetter, pushHistory, navigationMode, legendLetters, letterPositions, ciphertext])
+  }, [navigationMode, selectedLegendLetter, selectedCipherLetter, guesses, pushHistory, letterPositions, ciphertext])
 
   const deleteAndMoveBack = useCallback(() => {
     if (selectedCipherLetter !== null) {
@@ -217,41 +288,28 @@ function useCryptogram(plaintext, person) {
     [guesses, reverseCipher]
   )
 
-  // The cipher is built FROM the person's name (see cipher.js), so reading
-  // solved letters in plain A-Z order eventually spells it out - that's
-  // the intended "aha" mechanic, not a leak: this is guesses inverted
-  // (plainLetter -> cipherLetter), so it only ever shows letters the
-  // player has actually solved. It's purely a derived view for a passive
-  // display; it doesn't drive the interactive Legend, which stays indexed
-  // by cipher letter so quote-tile-to-legend-cell highlighting still works.
-  const plainToCipher = useMemo(() => {
-    const map = {}
-    for (const [cipherLetter, plainLetter] of Object.entries(guesses)) {
-      map[plainLetter] = cipherLetter
-    }
-    return map
-  }, [guesses])
-
   return {
     plaintext: upperPlaintext,
     ciphertext,
     letterPositions,
-    legendLetters,
     guesses,
     guessedText,
     plainToCipher,
     selectedPosition: highlightPosition,
     selectedCipherLetter,
+    selectedPlainLetter: highlightedPlainLetter,
     canUndo: history.length > 0,
     isComplete,
     isCorrect,
     isOnTrack,
     hasGuesses: Object.keys(guesses).length > 0,
     selectPosition,
-    selectCipherLetter,
+    selectLegendLetter,
     typeLetter,
     deleteAndMoveBack,
     revealHint,
+    revealPlainLetter,
+    fillRemaining,
     moveNext,
     movePrev,
     undo,

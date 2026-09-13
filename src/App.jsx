@@ -3,12 +3,12 @@ import './App.css'
 import GenreSelect from './components/GenreSelect'
 import QuoteBoard from './components/QuoteBoard'
 import Legend from './components/Legend'
-import DecoderKey from './components/DecoderKey'
 import Controls from './components/Controls'
 import AnswerBox from './components/AnswerBox'
 import SolvedReveal from './components/SolvedReveal'
 import DebugPanel from './components/DebugPanel'
 import useCryptogram from './hooks/useCryptogram'
+import { normalizePersonName } from './utils/cipher'
 import { CATEGORY_LABELS, pickRandomPuzzle } from './data/puzzles'
 
 function Puzzle({ category, difficulty, onChangeGenre }) {
@@ -68,13 +68,13 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
     game.selectPosition(position)
   }
 
-  function handleSelectCipherLetter(cipherLetter) {
+  function handleSelectLegendLetter(plainLetter) {
     if (gimmeMode) {
-      game.revealHint(cipherLetter)
+      game.revealPlainLetter(plainLetter)
       setGimmeMode(false)
       return
     }
-    game.selectCipherLetter(cipherLetter)
+    game.selectLegendLetter(plainLetter)
   }
 
   function handleSubmit() {
@@ -93,7 +93,13 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
   }
 
   function handleCheckPersonAnswer(guess) {
-    const isRightPerson = guess.trim().toLowerCase() === puzzle.person.trim().toLowerCase()
+    // Compare on letters only (case/spacing/punctuation-insensitive) so
+    // "JRR Tolkien", "j.r.r. tolkien", and "J. R. R. Tolkien" all match
+    // "J.R.R. Tolkien" - the player shouldn't have to reproduce the exact
+    // source string, just name the right person. Reuses the same
+    // normalization the cipher itself is built from, since it already
+    // strips exactly this kind of formatting noise down to bare letters.
+    const isRightPerson = normalizePersonName(guess) === normalizePersonName(puzzle.person)
     setFeedback(
       isRightPerson
         ? { kind: 'correct' }
@@ -193,14 +199,10 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
           />
 
           <Legend
-            ciphertext={game.ciphertext}
-            legendLetters={game.legendLetters}
-            guesses={game.guesses}
-            selectedCipherLetter={game.selectedCipherLetter}
-            onSelectCipherLetter={handleSelectCipherLetter}
+            plainToCipher={game.plainToCipher}
+            selectedPlainLetter={game.selectedPlainLetter}
+            onSelectPlainLetter={handleSelectLegendLetter}
           />
-
-          <DecoderKey plainToCipher={game.plainToCipher} />
 
           <Controls
             canUndo={game.canUndo}
@@ -209,6 +211,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
             onSubmit={handleSubmit}
             onGimme={() => setGimmeMode((current) => !current)}
             gimmeActive={gimmeMode}
+            onFill={game.fillRemaining}
             onCheckTrack={handleCheckTrack}
             feedback={feedback?.kind && feedback.kind !== 'correct' ? feedback : null}
           />

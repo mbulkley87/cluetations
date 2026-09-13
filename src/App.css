@@ -257,86 +257,22 @@
   box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
 }
 
-.legend-guess {
+.legend-resolved {
   font-size: 15px;
   font-weight: 800;
   height: 18px;
   color: #ffd166;
 }
 
-.legend-cipher-row {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-}
-
-.legend-cipher {
+.legend-plain {
   font-size: 11px;
   font-weight: 700;
   color: #6d7382;
-}
-
-.legend-count {
-  font-size: 9px;
-  font-weight: 700;
-  color: #4a5063;
 }
 
 .legend-cell-selected {
   border-color: #ffd166;
   background: rgba(255, 209, 102, 0.18);
-}
-
-/* ======================================================
-   DECODER KEY (passive, plain A-Z order - spells the person's name as
-   letters are solved, since the cipher is built from it)
-====================================================== */
-
-.decoder-key {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.decoder-key-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #6d7382;
-}
-
-.decoder-key-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-}
-
-.decoder-key-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 26px;
-  padding: 4px 0;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.decoder-key-cipher {
-  font-size: 13px;
-  font-weight: 800;
-  height: 16px;
-  color: #ffd166;
-}
-
-.decoder-key-plain {
-  font-size: 10px;
-  font-weight: 700;
-  color: #6d7382;
 }
 
 /* ======================================================

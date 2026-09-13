@@ -1,30 +1,25 @@
-import { useMemo } from 'react'
-import { isLetter } from '../utils/cipher'
+import { ALPHABET } from '../utils/cipher'
 
-function Legend({ ciphertext, legendLetters, guesses, selectedCipherLetter, onSelectCipherLetter }) {
-  // How many times each cipher letter actually appears in the puzzle - a
-  // classic frequency-analysis aid. Most of legendLetters' 26 letters
-  // won't appear in a short quote at all, hence the || 0 fallback below.
-  const letterCounts = useMemo(() => {
-    const counts = {}
-    for (const char of ciphertext) {
-      if (isLetter(char)) counts[char] = (counts[char] || 0) + 1
-    }
-    return counts
-  }, [ciphertext])
-
+// Indexed by the PLAIN alphabet A-Z (fixed, always visible - it's just the
+// alphabet, not a secret). Each cell shows the cipher letter the player
+// has resolved for that plain letter, if any - i.e. plainToCipher, which
+// only ever contains letters actually solved. The cipher is built FROM
+// the person's name (see cipher.js), so reading this in order eventually
+// spells it out as more gets solved - that's the intended payoff, not a
+// leak: nothing appears here until the player has earned it.
+function Legend({ plainToCipher, selectedPlainLetter, onSelectPlainLetter }) {
   return (
     <div className="legend">
-      {legendLetters.map((cipherLetter) => (
+      {ALPHABET.map((plainLetter) => (
         <button
-          key={cipherLetter}
+          key={plainLetter}
           type="button"
           className={[
             'legend-cell',
-            cipherLetter === selectedCipherLetter ? 'legend-cell-selected' : '',
+            plainLetter === selectedPlainLetter ? 'legend-cell-selected' : '',
           ].filter(Boolean).join(' ')}
           onClick={(event) => {
-            onSelectCipherLetter(cipherLetter)
+            onSelectPlainLetter(plainLetter)
             // A focused <button> has its own native Space/Arrow-key
             // behavior that can fight the global keyboard navigation
             // handler even with preventDefault() there - blurring it right
@@ -33,11 +28,8 @@ function Legend({ ciphertext, legendLetters, guesses, selectedCipherLetter, onSe
             event.currentTarget.blur()
           }}
         >
-          <span className="legend-guess">{guesses[cipherLetter] || ' '}</span>
-          <span className="legend-cipher-row">
-            <span className="legend-cipher">{cipherLetter}</span>
-            <span className="legend-count">{letterCounts[cipherLetter] || 0}</span>
-          </span>
+          <span className="legend-resolved">{plainToCipher[plainLetter] || ' '}</span>
+          <span className="legend-plain">{plainLetter}</span>
         </button>
       ))}
     </div>
