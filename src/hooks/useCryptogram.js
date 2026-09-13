@@ -17,7 +17,6 @@ import { encryptQuote, buildCipherAlphabet, buildReverseCipherAlphabet, normaliz
 // of the pair instead of the plain-letter side - see typeLetter.
 function useCryptogram(plaintext, person) {
   const ciphertext = useMemo(() => encryptQuote(plaintext, person), [plaintext, person])
-  const upperPlaintext = useMemo(() => plaintext.toUpperCase(), [plaintext])
   const forwardCipher = useMemo(() => buildCipherAlphabet(person), [person])
   const reverseCipher = useMemo(() => buildReverseCipherAlphabet(person), [person])
 
@@ -266,22 +265,6 @@ function useCryptogram(plaintext, person) {
     setNavigationMode('quote')
   }, [initialGuesses, letterPositions])
 
-  // What the player has built so far, letter by letter - used both to
-  // render the quote and to check the answer on submit.
-  const guessedText = useMemo(
-    () => ciphertext.split('').map((char) => (isLetter(char) ? (guesses[char] || '') : char)).join(''),
-    [ciphertext, guesses]
-  )
-
-  const isComplete = useMemo(
-    () => letterPositions.every((position) => Boolean(guesses[ciphertext[position]])),
-    [letterPositions, guesses, ciphertext]
-  )
-
-  // Case is ignored deliberately - both sides are already uppercased, this
-  // just documents that submit is a case-insensitive comparison per spec.
-  const isCorrect = useMemo(() => guessedText === upperPlaintext, [guessedText, upperPlaintext])
-
   // "Am I on the right track?" only judges what's actually been filled in -
   // unguessed letters don't count against you, only wrong ones do.
   const isOnTrack = useMemo(
@@ -290,18 +273,14 @@ function useCryptogram(plaintext, person) {
   )
 
   return {
-    plaintext: upperPlaintext,
     ciphertext,
     letterPositions,
     guesses,
-    guessedText,
     plainToCipher,
     selectedPosition: highlightPosition,
     selectedCipherLetter,
     selectedPlainLetter: highlightedPlainLetter,
     canUndo: history.length > 0,
-    isComplete,
-    isCorrect,
     isOnTrack,
     hasGuesses: Object.keys(guesses).length > 0,
     selectPosition,

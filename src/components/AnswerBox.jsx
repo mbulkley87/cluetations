@@ -1,8 +1,9 @@
 import { useState } from 'react'
 
-// Shown once the quote itself is fully and correctly decoded - the last
-// step is naming who actually said it, which the cipher deliberately never
-// reveals (the person's name IS the cipher key).
+// Always present - guessing the person correctly IS the win condition,
+// independent of how much of the cipher the player has actually solved.
+// The person's name is deliberately never shown anywhere else (it IS the
+// cipher key); this is the only place to name them.
 function AnswerBox({ onCheck }) {
   const [value, setValue] = useState('')
 
@@ -14,7 +15,7 @@ function AnswerBox({ onCheck }) {
   return (
     <form className="answer-box" onSubmit={handleSubmit}>
       <label htmlFor="answer-box-input" className="answer-box-label">
-        Quote decoded! Who said it?
+        Who said it?
       </label>
       <div className="answer-box-row">
         <input
@@ -24,10 +25,9 @@ function AnswerBox({ onCheck }) {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           placeholder="Type your guess..."
-          autoFocus
         />
         <button type="submit" className="control-button control-button-submit">
-          Check Answer
+          Submit
         </button>
       </div>
     </form>

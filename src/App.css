@@ -386,24 +386,6 @@
   font-weight: 700;
 }
 
-.controls-feedback-correct {
-  background: rgba(101, 216, 141, 0.15);
-  color: #a4f0be;
-  border: 1px solid rgba(101, 216, 141, 0.4);
-}
-
-.controls-feedback-incorrect {
-  background: rgba(239, 71, 111, 0.15);
-  color: #ffb6c6;
-  border: 1px solid rgba(239, 71, 111, 0.4);
-}
-
-.controls-feedback-incomplete {
-  background: rgba(255, 209, 102, 0.15);
-  color: #ffe2a6;
-  border: 1px solid rgba(255, 209, 102, 0.4);
-}
-
 .controls-feedback-wrong-person {
   background: rgba(239, 71, 111, 0.15);
   color: #ffb6c6;

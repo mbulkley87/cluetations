@@ -2,7 +2,6 @@ function Controls({
   canUndo,
   onUndo,
   onReset,
-  onSubmit,
   onGimme,
   gimmeActive,
   onCheckTrack,
@@ -26,9 +25,6 @@ function Controls({
         </button>
         <button type="button" className="control-button" onClick={onCheckTrack}>
           🎯 On Track?
-        </button>
-        <button type="button" className="control-button control-button-submit" onClick={onSubmit}>
-          Submit
         </button>
       </div>
       {feedback && (

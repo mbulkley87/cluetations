@@ -44,10 +44,6 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
   const [yearRevealed, setYearRevealed] = useState(false)
   const [hintRevealed, setHintRevealed] = useState(false)
   const solved = feedback?.kind === 'correct'
-  // Only ever shown while the decode is CURRENTLY correct - if the player
-  // undoes back out of a correct decode after reaching this step, the box
-  // disappears until they fix the decode and submit again.
-  const showAnswerBox = feedback?.kind !== 'correct' && feedback?.awaitingPerson && game.isCorrect
 
   useEffect(() => {
     if (solved) return undefined
@@ -102,33 +98,20 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
     game.selectLegendLetter(plainLetter)
   }
 
-  function handleSubmit() {
-    if (!game.isComplete) {
-      setFeedback({ kind: 'incomplete', message: 'Fill in every letter before submitting.' })
-      return
-    }
-    if (!game.isCorrect) {
-      setFeedback({ kind: 'incorrect', message: 'Not quite right - keep at it.' })
-      return
-    }
-    // Decode is correct - last step is naming the source, which the
-    // AnswerBox handles. awaitingPerson isn't a real "kind" (no banner of
-    // its own renders for it), just the flag showAnswerBox reads.
-    setFeedback({ awaitingPerson: true })
-  }
-
   function handleCheckPersonAnswer(guess) {
-    // Compare on letters only (case/spacing/punctuation-insensitive) so
-    // "JRR Tolkien", "j.r.r. tolkien", and "J. R. R. Tolkien" all match
-    // "J.R.R. Tolkien" - the player shouldn't have to reproduce the exact
-    // source string, just name the right person. Reuses the same
-    // normalization the cipher itself is built from, since it already
-    // strips exactly this kind of formatting noise down to bare letters.
+    // Naming the person correctly IS the win condition - independent of
+    // how much of the cipher has actually been solved (the info screen
+    // reveals the full quote/work/year regardless). Compared on letters
+    // only (case/spacing/punctuation-insensitive) so "JRR Tolkien",
+    // "j.r.r. tolkien", and "J. R. R. Tolkien" all match "J.R.R. Tolkien" -
+    // reuses the same normalization the cipher itself is built from, since
+    // it already strips exactly this kind of formatting noise down to
+    // bare letters.
     const isRightPerson = normalizePersonName(guess) === normalizePersonName(puzzle.person)
     setFeedback(
       isRightPerson
         ? { kind: 'correct' }
-        : { kind: 'wrong-person', message: "That's not who said it - try again.", awaitingPerson: true }
+        : { kind: 'wrong-person', message: "That's not who said it - try again." }
     )
   }
 
@@ -226,14 +209,13 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
             canUndo={game.canUndo}
             onUndo={game.undo}
             onReset={handleReset}
-            onSubmit={handleSubmit}
             onGimme={() => setGimmeMode((current) => !current)}
             gimmeActive={gimmeMode}
             onCheckTrack={handleCheckTrack}
-            feedback={feedback?.kind && feedback.kind !== 'correct' ? feedback : null}
+            feedback={feedback}
           />
 
-          {showAnswerBox && <AnswerBox onCheck={handleCheckPersonAnswer} />}
+          <AnswerBox onCheck={handleCheckPersonAnswer} />
         </>
       )}
 
