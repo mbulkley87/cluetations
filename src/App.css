@@ -190,9 +190,15 @@
   white-space: nowrap;
 }
 
+/* Aligned to the TOP (guessed-letter) row, not the bottom (cipher-letter)
+   row - an apostrophe sitting down near the small cipher text reads as a
+   comma at a glance. Punctuation belongs at the baseline of the letters
+   it's actually attached to. */
 .quote-punct {
-  align-self: flex-end;
-  padding-bottom: 6px;
+  align-self: flex-start;
+  height: 28px;
+  line-height: 28px;
+  padding-top: 4px;
   font-size: 22px;
   font-weight: 700;
   color: #6d7382;
