@@ -1,10 +1,10 @@
-function SolvedReveal({ quote, person, work, onNewQuote, onChangeGenre }) {
+function SolvedReveal({ quote, person, work, year, onNewQuote, onChangeGenre }) {
   return (
     <div className="solved-reveal">
       <div className="solved-title">CORRECT!</div>
       <blockquote className="solved-quote">&ldquo;{quote}&rdquo;</blockquote>
       <div className="solved-person">{person}</div>
-      <div className="solved-work">{work}</div>
+      <div className="solved-work">{work} ({year})</div>
       <div className="solved-actions">
         <button type="button" className="control-button" onClick={onNewQuote}>
           New Quote

@@ -379,6 +379,57 @@
 }
 
 /* ======================================================
+   ON-SCREEN KEYBOARD (touch input - phones have no physical keyboard to
+   fire the keydown events the game otherwise relies on)
+====================================================== */
+
+.keyboard {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.keyboard-key {
+  flex: 1;
+  max-width: 40px;
+  min-width: 26px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(160deg, #1d212c, #14161d);
+  color: #e7e9ee;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.keyboard-key:hover {
+  border-color: rgba(255, 209, 102, 0.5);
+}
+
+.keyboard-key:active {
+  background: rgba(255, 209, 102, 0.22);
+  border-color: #ffd166;
+}
+
+.keyboard-key-wide {
+  flex: 1.6;
+  max-width: 64px;
+  font-size: 16px;
+}
+
+/* ======================================================
    SOLVED REVEAL
 ====================================================== */
 

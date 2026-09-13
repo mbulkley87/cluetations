@@ -3,6 +3,7 @@ import './App.css'
 import GenreSelect from './components/GenreSelect'
 import QuoteBoard from './components/QuoteBoard'
 import Legend from './components/Legend'
+import Keyboard from './components/Keyboard'
 import Controls from './components/Controls'
 import AnswerBox from './components/AnswerBox'
 import SolvedReveal from './components/SolvedReveal'
@@ -198,6 +199,7 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
           quote={puzzle.quote}
           person={puzzle.person}
           work={puzzle.work}
+          year={puzzle.year}
           onNewQuote={onNewQuote}
           onChangeGenre={onChangeGenre}
         />
@@ -216,6 +218,8 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
             selectedPlainLetter={game.selectedPlainLetter}
             onSelectPlainLetter={handleSelectLegendLetter}
           />
+
+          <Keyboard onType={game.typeLetter} onDelete={game.deleteAndMoveBack} />
 
           <Controls
             canUndo={game.canUndo}
