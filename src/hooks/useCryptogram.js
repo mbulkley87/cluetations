@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { encryptQuote, buildCipherSequence, buildReverseCipherAlphabet, isLetter } from '../utils/cipher'
+import { encryptQuote, buildReverseCipherAlphabet, isLetter, ALPHABET } from '../utils/cipher'
 
 // One playthrough of a single puzzle: the plaintext, its cipher (derived
 // from the person's name - see src/utils/cipher.js), and every piece of
@@ -10,12 +10,14 @@ function useCryptogram(plaintext, person) {
   const upperPlaintext = useMemo(() => plaintext.toUpperCase(), [plaintext])
   const reverseCipher = useMemo(() => buildReverseCipherAlphabet(person), [person])
 
-  // All 26 cipher letters, in the exact order the legend displays them -
-  // the person's own unique letters first, then the reverse-alphabet
-  // leftovers (see buildCipherSequence). Most of these won't actually
-  // appear in a short quote, which is exactly why legend-mode navigation
-  // can't just be "positions in the quote" - see navigationMode below.
-  const cipherSequence = useMemo(() => buildCipherSequence(person), [person])
+  // The legend lists cipher letters in plain A-Z order, NOT the order they
+  // were assigned in (buildCipherSequence). That assignment order starts
+  // with the person's own name, so listing the legend in that order would
+  // let a player solve the puzzle by just typing the alphabet straight
+  // through (cipherSequence[i] is always the encryption of plain letter
+  // i). Since every cipher letter is a permutation of A-Z, "sorted by the
+  // cipher letter itself" is just the alphabet, unrelated to the person.
+  const legendLetters = ALPHABET
 
   // Every character index that's an actual letter (spaces/punctuation are
   // shown as-is and never selectable) - this is the order arrow keys/space
@@ -100,10 +102,10 @@ function useCryptogram(plaintext, person) {
   const moveBy = useCallback((delta) => {
     if (navigationMode === 'legend') {
       setSelectedLegendLetter((current) => {
-        const currentIndex = cipherSequence.indexOf(current)
+        const currentIndex = legendLetters.indexOf(current)
         const baseIndex = currentIndex === -1 ? 0 : currentIndex
-        const nextIndex = Math.min(Math.max(baseIndex + delta, 0), cipherSequence.length - 1)
-        return cipherSequence[nextIndex]
+        const nextIndex = Math.min(Math.max(baseIndex + delta, 0), legendLetters.length - 1)
+        return legendLetters[nextIndex]
       })
       return
     }
@@ -116,7 +118,7 @@ function useCryptogram(plaintext, person) {
       if (nextIndex >= letterPositions.length) return letterPositions[letterPositions.length - 1] ?? null
       return letterPositions[nextIndex]
     })
-  }, [navigationMode, cipherSequence, letterPositions])
+  }, [navigationMode, legendLetters, letterPositions])
 
   const moveNext = useCallback(() => moveBy(1), [moveBy])
   const movePrev = useCallback(() => moveBy(-1), [moveBy])
@@ -178,7 +180,7 @@ function useCryptogram(plaintext, person) {
     plaintext: upperPlaintext,
     ciphertext,
     letterPositions,
-    cipherSequence,
+    legendLetters,
     guesses,
     guessedText,
     selectedPosition: highlightPosition,

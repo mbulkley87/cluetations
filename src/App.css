@@ -179,6 +179,12 @@
   background: transparent;
   cursor: pointer;
   font: inherit;
+  transition: box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.quote-tile:hover {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.45);
 }
 
 .quote-tile-guess {
@@ -243,6 +249,12 @@
   color: #e7e9ee;
   cursor: pointer;
   font: inherit;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.legend-cell:hover {
+  border-color: rgba(255, 209, 102, 0.55);
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
 }
 
 .legend-guess {
@@ -476,6 +488,8 @@
 
 .hint-banner {
   width: 100%;
+  min-height: 56px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -483,12 +497,23 @@
   gap: 12px;
   padding: 10px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 209, 102, 0.5);
-  background: rgba(255, 209, 102, 0.12);
-  color: #ffe2a6;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #8a8f9c;
   font-size: 13px;
   font-weight: 700;
   text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.hint-banner-active {
+  border-color: rgba(255, 209, 102, 0.5);
+  background: rgba(255, 209, 102, 0.12);
+  color: #ffe2a6;
+}
+
+.hint-banner-placeholder {
+  font-weight: 600;
 }
 
 .hint-banner-cancel {

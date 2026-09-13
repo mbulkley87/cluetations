@@ -15,6 +15,10 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
   const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
   const [gimmeMode, setGimmeMode] = useState(false)
+  // The specific cipher letter clicked while gimmeMode is active, awaiting
+  // confirmation before it's actually revealed - clicking a letter never
+  // reveals it immediately anymore.
+  const [pendingGimmeLetter, setPendingGimmeLetter] = useState(null)
   const [yearRevealed, setYearRevealed] = useState(false)
   const [hintRevealed, setHintRevealed] = useState(false)
   const solved = feedback?.kind === 'correct'
@@ -27,6 +31,13 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
     if (solved) return undefined
 
     function handleKeyDown(event) {
+      // A focused text field (the AnswerBox input) handles its own typing -
+      // without this guard, preventDefault() below blocks characters from
+      // ever reaching it while simultaneously overwriting quote/legend
+      // guesses as if the player were still typing into the puzzle.
+      const targetTag = event.target?.tagName
+      if (targetTag === 'INPUT' || targetTag === 'TEXTAREA') return
+
       const key = event.key
 
       if (key === 'ArrowRight' || key === 'ArrowDown' || key === ' ') {
@@ -40,6 +51,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
         game.deleteAndMoveBack()
       } else if (key === 'Escape' && gimmeMode) {
         event.preventDefault()
+        setPendingGimmeLetter(null)
         setGimmeMode(false)
       } else if (/^[a-zA-Z]$/.test(key)) {
         event.preventDefault()
@@ -53,8 +65,8 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
 
   function handleSelectPosition(position) {
     if (gimmeMode) {
-      game.revealHint(game.ciphertext[position])
-      setGimmeMode(false)
+      setPendingGimmeLetter(game.ciphertext[position])
+      game.selectPosition(position)
       return
     }
     game.selectPosition(position)
@@ -62,11 +74,36 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
 
   function handleSelectCipherLetter(cipherLetter) {
     if (gimmeMode) {
-      game.revealHint(cipherLetter)
-      setGimmeMode(false)
+      setPendingGimmeLetter(cipherLetter)
+      game.selectCipherLetter(cipherLetter)
       return
     }
     game.selectCipherLetter(cipherLetter)
+  }
+
+  function handleToggleGimme() {
+    setGimmeMode((current) => {
+      const next = !current
+      if (!next) setPendingGimmeLetter(null)
+      return next
+    })
+  }
+
+  function handleConfirmGimme() {
+    if (pendingGimmeLetter) {
+      game.revealHint(pendingGimmeLetter)
+    }
+    setPendingGimmeLetter(null)
+    setGimmeMode(false)
+  }
+
+  function handleCancelPendingGimme() {
+    setPendingGimmeLetter(null)
+  }
+
+  function handleExitGimme() {
+    setPendingGimmeLetter(null)
+    setGimmeMode(false)
   }
 
   function handleSubmit() {
@@ -107,6 +144,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
   function handleNewQuote() {
     setFeedback(null)
     setGimmeMode(false)
+    setPendingGimmeLetter(null)
     setYearRevealed(false)
     setHintRevealed(false)
     setPuzzle((current) => pickRandomPuzzle(category, current.id, difficulty))
@@ -115,6 +153,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
   function handleReset() {
     setFeedback(null)
     setGimmeMode(false)
+    setPendingGimmeLetter(null)
     setYearRevealed(false)
     setHintRevealed(false)
     game.reset()
@@ -149,29 +188,43 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
         />
       ) : (
         <>
-          {(yearRevealed || hintRevealed) && (
-            <div className="reveal-info">
-              {yearRevealed && (
-                <div className="reveal-info-row">
-                  <strong>Year:</strong> {puzzle.year}
-                </div>
-              )}
-              {hintRevealed && (
-                <div className="reveal-info-row">
-                  <strong>Hint:</strong> {puzzle.hint}
-                </div>
-              )}
+          {/* Both banners below are always mounted, at fixed heights - only
+              their content changes. Mounting/unmounting them on demand was
+              shifting the quote board and legend up and down every time
+              Gimme or Year/Hint were toggled. */}
+          <div className="reveal-info">
+            <div className="reveal-info-row">
+              <strong>Year:</strong> {yearRevealed ? puzzle.year : '—'}
             </div>
-          )}
+            <div className="reveal-info-row">
+              <strong>Hint:</strong> {hintRevealed ? puzzle.hint : '—'}
+            </div>
+          </div>
 
-          {gimmeMode && (
-            <div className="hint-banner">
-              <span>Which letter do you want? Click any letter to reveal it.</span>
-              <button type="button" className="text-button hint-banner-cancel" onClick={() => setGimmeMode(false)}>
-                Cancel
-              </button>
-            </div>
-          )}
+          <div className={`hint-banner${gimmeMode ? ' hint-banner-active' : ''}`}>
+            {gimmeMode ? (
+              pendingGimmeLetter ? (
+                <>
+                  <span>Reveal the letter for <strong>{pendingGimmeLetter}</strong>?</span>
+                  <button type="button" className="text-button" onClick={handleConfirmGimme}>
+                    Confirm
+                  </button>
+                  <button type="button" className="text-button hint-banner-cancel" onClick={handleCancelPendingGimme}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>Which letter do you want? Click any letter to reveal it.</span>
+                  <button type="button" className="text-button hint-banner-cancel" onClick={handleExitGimme}>
+                    Cancel
+                  </button>
+                </>
+              )
+            ) : (
+              <span className="hint-banner-placeholder">Click &ldquo;Gimme&rdquo; below to reveal a letter.</span>
+            )}
+          </div>
 
           <QuoteBoard
             ciphertext={game.ciphertext}
@@ -183,7 +236,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
 
           <Legend
             ciphertext={game.ciphertext}
-            cipherSequence={game.cipherSequence}
+            legendLetters={game.legendLetters}
             guesses={game.guesses}
             selectedCipherLetter={game.selectedCipherLetter}
             onSelectCipherLetter={handleSelectCipherLetter}
@@ -198,7 +251,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
             yearRevealed={yearRevealed}
             onHint={() => setHintRevealed(true)}
             hintRevealed={hintRevealed}
-            onGimme={() => setGimmeMode((current) => !current)}
+            onGimme={handleToggleGimme}
             gimmeActive={gimmeMode}
             onCheckTrack={handleCheckTrack}
             feedback={feedback?.kind && feedback.kind !== 'correct' ? feedback : null}

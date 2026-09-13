@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { isLetter } from '../utils/cipher'
 
-function Legend({ ciphertext, cipherSequence, guesses, selectedCipherLetter, onSelectCipherLetter }) {
+function Legend({ ciphertext, legendLetters, guesses, selectedCipherLetter, onSelectCipherLetter }) {
   // How many times each cipher letter actually appears in the puzzle - a
-  // classic frequency-analysis aid. Most of cipherSequence's 26 letters
+  // classic frequency-analysis aid. Most of legendLetters' 26 letters
   // won't appear in a short quote at all, hence the || 0 fallback below.
   const letterCounts = useMemo(() => {
     const counts = {}
@@ -15,7 +15,7 @@ function Legend({ ciphertext, cipherSequence, guesses, selectedCipherLetter, onS
 
   return (
     <div className="legend">
-      {cipherSequence.map((cipherLetter) => (
+      {legendLetters.map((cipherLetter) => (
         <button
           key={cipherLetter}
           type="button"

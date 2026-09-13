@@ -1,4 +1,4 @@
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 // Uppercase, letters only - strips spaces, punctuation, apostrophes, and
 // hyphens so "J.R.R. Tolkien" and "Martin Luther King Jr." reduce to a
