@@ -11,8 +11,32 @@ import useCryptogram from './hooks/useCryptogram'
 import { normalizePersonName } from './utils/cipher'
 import { CATEGORY_LABELS, pickRandomPuzzle } from './data/puzzles'
 
+// Picks which puzzle is active and owns nothing else - PuzzleGame below is
+// given `key={puzzle.id}`, which is what actually matters here: a changed
+// key tells React this is a genuinely new component instance, so it
+// unmounts the old one (discarding useCryptogram's guesses/history/
+// selection state, and PuzzleGame's own feedback/gimmeMode/reveal state)
+// and mounts a fresh one, instead of reusing the old instance in place
+// with stale state left over from the previous quote.
 function Puzzle({ category, difficulty, onChangeGenre }) {
   const [puzzle, setPuzzle] = useState(() => pickRandomPuzzle(category, null, difficulty))
+
+  function handleNewQuote() {
+    setPuzzle((current) => pickRandomPuzzle(category, current.id, difficulty))
+  }
+
+  return (
+    <PuzzleGame
+      key={puzzle.id}
+      puzzle={puzzle}
+      category={category}
+      onNewQuote={handleNewQuote}
+      onChangeGenre={onChangeGenre}
+    />
+  )
+}
+
+function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
   const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
   const [gimmeMode, setGimmeMode] = useState(false)
@@ -118,14 +142,6 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
     )
   }
 
-  function handleNewQuote() {
-    setFeedback(null)
-    setGimmeMode(false)
-    setYearRevealed(false)
-    setHintRevealed(false)
-    setPuzzle((current) => pickRandomPuzzle(category, current.id, difficulty))
-  }
-
   function handleReset() {
     setFeedback(null)
     setGimmeMode(false)
@@ -135,15 +151,12 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
   }
 
   return (
-    // Remounting on puzzle change is deliberate - useCryptogram derives its
-    // cipher fresh from person/quote, so a new puzzle needs a fresh
-    // instance rather than trying to reset an existing one in place.
-    <div className="puzzle-screen" key={puzzle.id}>
+    <div className="puzzle-screen">
       <div className="puzzle-header">
         <span className="puzzle-genre">{CATEGORY_LABELS[category]}</span>
         {!solved && (
           <div className="puzzle-header-actions">
-            <button type="button" className="text-button" onClick={handleNewQuote}>
+            <button type="button" className="text-button" onClick={onNewQuote}>
               New Quote
             </button>
             <button type="button" className="text-button" onClick={onChangeGenre}>
@@ -185,7 +198,7 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
           quote={puzzle.quote}
           person={puzzle.person}
           work={puzzle.work}
-          onNewQuote={handleNewQuote}
+          onNewQuote={onNewQuote}
           onChangeGenre={onChangeGenre}
         />
       ) : (
