@@ -122,7 +122,7 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
       wasCipherSolvedRef.current = true
       setJustCracked(true)
       triggerHaptic([25, 40, 60])
-      const timeout = setTimeout(() => setJustCracked(false), 1300)
+      const timeout = setTimeout(() => setJustCracked(false), 2000)
       return () => clearTimeout(timeout)
     }
     if (!game.isCipherSolved) {

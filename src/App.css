@@ -501,23 +501,28 @@
   100% { box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.4), 0 0 40px rgba(255, 209, 102, 0.25); }
 }
 
+/* Fixed to the viewport rather than the quote board - on a long quote
+   (or when scrolled to a word further down), confetti scoped to the
+   board's own top ~240px could fall entirely outside what's actually on
+   screen. Fixed positioning falls through whatever's currently visible,
+   regardless of quote length or scroll position. */
 .confetti-burst {
-  position: absolute;
+  position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 5;
+  z-index: 50;
 }
 
 .confetti-piece {
   position: absolute;
-  top: -30px;
-  animation: confetti-fall 1.1s ease-in forwards;
+  top: -40px;
+  animation: confetti-fall 1.7s ease-in forwards;
 }
 
 @keyframes confetti-fall {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(240px) rotate(340deg); opacity: 0; }
+  100% { transform: translateY(80vh) rotate(360deg); opacity: 0; }
 }
 
 /* ======================================================
