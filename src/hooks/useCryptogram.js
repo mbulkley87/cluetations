@@ -272,6 +272,15 @@ function useCryptogram(plaintext, person) {
     [guesses, reverseCipher]
   )
 
+  // Whether the cipher itself is fully and correctly decoded - purely
+  // reactive (no Submit button drives this anymore), watched by the UI to
+  // trigger the "cipher cracked" celebration. Naming the person is the
+  // actual win condition; this just marks the earlier milestone.
+  const isCipherSolved = useMemo(() => {
+    const guessedText = ciphertext.split('').map((char) => (isLetter(char) ? (guesses[char] || '') : char)).join('')
+    return guessedText === plaintext.toUpperCase()
+  }, [ciphertext, guesses, plaintext])
+
   return {
     ciphertext,
     letterPositions,
@@ -282,6 +291,7 @@ function useCryptogram(plaintext, person) {
     selectedPlainLetter: highlightedPlainLetter,
     canUndo: history.length > 0,
     isOnTrack,
+    isCipherSolved,
     hasGuesses: Object.keys(guesses).length > 0,
     selectPosition,
     selectLegendLetter,
