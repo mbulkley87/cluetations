@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { encryptQuote, buildCipherAlphabet, buildReverseCipherAlphabet, isLetter, ALPHABET } from '../utils/cipher'
+import { encryptQuote, buildCipherAlphabet, buildReverseCipherAlphabet, normalizePersonName, isLetter, ALPHABET } from '../utils/cipher'
 
 // One playthrough of a single puzzle: the plaintext, its cipher (derived
 // from the person's name - see src/utils/cipher.js), and every piece of
@@ -29,7 +29,31 @@ function useCryptogram(plaintext, person) {
     [ciphertext]
   )
 
-  const [guesses, setGuesses] = useState({}) // cipherLetter -> guessed plaintext letter
+  // Some of the person's own name letters can end up with no way to ever
+  // be discovered from context: their cipher letter simply never appears
+  // anywhere in this particular quote's ciphertext (the quote just
+  // doesn't happen to use that plain letter). That's not "not solved
+  // yet" - it's genuinely unreachable, since there's no tile anywhere to
+  // find it from. Rather than leave a permanent gap in the Legend's
+  // "spells the name" payoff, those specific letters start pre-solved.
+  // Letters outside the name (the mechanical reverse-alphabet tail) are
+  // left alone even if unreachable - only the name's own letters matter
+  // for that payoff. This is the puzzle's actual starting state, so
+  // `reset` restores it too, rather than clearing to a truly empty map.
+  const initialGuesses = useMemo(() => {
+    const nameLetterCount = new Set(normalizePersonName(person)).size
+    const initial = {}
+    for (let i = 0; i < nameLetterCount; i++) {
+      const plainLetter = ALPHABET[i]
+      const cipherLetter = forwardCipher[plainLetter]
+      if (!ciphertext.includes(cipherLetter)) {
+        initial[cipherLetter] = plainLetter
+      }
+    }
+    return initial
+  }, [person, forwardCipher, ciphertext])
+
+  const [guesses, setGuesses] = useState(initialGuesses) // cipherLetter -> guessed plaintext letter
   const [history, setHistory] = useState([]) // stack of previous guesses snapshots, for undo
 
   // Quote-mode selection is a POSITION (so repeated letters in the quote
@@ -236,11 +260,11 @@ function useCryptogram(plaintext, person) {
 
   const reset = useCallback(() => {
     setHistory([])
-    setGuesses({})
+    setGuesses(initialGuesses)
     setSelectedPosition(letterPositions[0] ?? null)
     setSelectedLegendLetter(null)
     setNavigationMode('quote')
-  }, [letterPositions])
+  }, [initialGuesses, letterPositions])
 
   // What the player has built so far, letter by letter - used both to
   // render the quote and to check the answer on submit.
