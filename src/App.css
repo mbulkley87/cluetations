@@ -47,11 +47,16 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.08s ease;
 }
 
 .difficulty-button:hover {
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+.difficulty-button:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .difficulty-button-selected {
@@ -81,6 +86,13 @@
 .genre-button:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 209, 102, 0.6);
+}
+
+.genre-button:active {
+  transform: scale(0.96);
+  border-color: #ffd166;
+  background: linear-gradient(160deg, #23283a, #1a1c26);
+  transition: transform 0.06s ease, border-color 0.06s ease, background 0.06s ease;
 }
 
 /* ======================================================
@@ -128,11 +140,18 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, background 0.08s ease;
 }
 
 .text-button:hover {
   border-color: rgba(255, 255, 255, 0.4);
   color: #fff;
+}
+
+.text-button:active {
+  transform: scale(0.93);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #ffd166;
 }
 
 /* ======================================================
@@ -179,12 +198,18 @@
   background: transparent;
   cursor: pointer;
   font: inherit;
-  transition: box-shadow 0.12s ease, background 0.12s ease;
+  transition: box-shadow 0.12s ease, background 0.12s ease, transform 0.06s ease;
 }
 
 .quote-tile:hover {
   background: rgba(255, 255, 255, 0.06);
   box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.45);
+}
+
+.quote-tile:active {
+  transform: scale(0.9);
+  background: rgba(255, 209, 102, 0.2);
+  box-shadow: 0 0 0 2px #ffd166;
 }
 
 .quote-tile-guess {
@@ -249,12 +274,18 @@
   color: #e7e9ee;
   cursor: pointer;
   font: inherit;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, transform 0.06s ease;
 }
 
 .legend-cell:hover {
   border-color: rgba(255, 209, 102, 0.55);
   box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+}
+
+.legend-cell:active {
+  transform: scale(0.92);
+  border-color: #ffd166;
+  background: rgba(255, 209, 102, 0.25);
 }
 
 .legend-resolved {
@@ -264,10 +295,22 @@
   color: #ffd166;
 }
 
+.legend-plain-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
 .legend-plain {
   font-size: 11px;
   font-weight: 700;
   color: #6d7382;
+}
+
+.legend-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: #4a5063;
 }
 
 .legend-cell-selected {
@@ -303,6 +346,7 @@
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
+  transition: border-color 0.12s ease, transform 0.08s ease, background 0.08s ease;
 }
 
 .control-button:disabled {
@@ -314,6 +358,12 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+.control-button:active:not(:disabled) {
+  transform: scale(0.94);
+  background: linear-gradient(160deg, #262b3d, #1a1d28);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .control-button-submit {
   border-color: rgba(239, 71, 111, 0.6);
   background: linear-gradient(160deg, #4a1f2b, #2a1216);
@@ -321,6 +371,11 @@
 }
 
 .control-button-submit:hover {
+  border-color: #ef476f;
+}
+
+.control-button-submit:active:not(:disabled) {
+  background: linear-gradient(160deg, #5a2534, #351619);
   border-color: #ef476f;
 }
 
@@ -411,7 +466,7 @@
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
-  transition: border-color 0.12s ease, background 0.12s ease;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.06s ease;
 }
 
 .keyboard-key:hover {
@@ -421,6 +476,7 @@
 .keyboard-key:active {
   background: rgba(255, 209, 102, 0.22);
   border-color: #ffd166;
+  transform: scale(0.9);
 }
 
 .keyboard-key-wide {

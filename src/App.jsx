@@ -214,6 +214,7 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
           />
 
           <Legend
+            ciphertext={game.ciphertext}
             plainToCipher={game.plainToCipher}
             selectedPlainLetter={game.selectedPlainLetter}
             onSelectPlainLetter={handleSelectLegendLetter}
