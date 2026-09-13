@@ -30,9 +30,14 @@ export function getPuzzlesByCategory(category) {
 // and never hands back the exact one that was just showing.
 const shownByCategory = {}
 
-export function pickRandomPuzzle(category, excludeId = null) {
-  const pool = getPuzzlesByCategory(category)
-  if (!pool.length) return null
+export function pickRandomPuzzle(category, excludeId = null, difficulty = null) {
+  const fullPool = getPuzzlesByCategory(category)
+  if (!fullPool.length) return null
+
+  // Filter by difficulty when requested, but fall back to the full pool
+  // rather than returning nothing if that difficulty has no entries yet.
+  const filteredPool = difficulty ? fullPool.filter((puzzle) => puzzle.difficulty === difficulty) : fullPool
+  const pool = filteredPool.length ? filteredPool : fullPool
   if (pool.length === 1) return pool[0]
 
   const shown = shownByCategory[category] || (shownByCategory[category] = new Set())

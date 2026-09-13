@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { normalizePersonName, buildCipherAlphabet, buildReverseCipherAlphabet, encryptQuote } from './cipher'
+import { normalizePersonName, buildCipherSequence, buildCipherAlphabet, buildReverseCipherAlphabet, encryptQuote } from './cipher'
+
+describe('buildCipherSequence - worked example from spec (Dolly Parton)', () => {
+  test('is the person\'s unique letters first, then unused letters Z->A', () => {
+    expect(buildCipherSequence('Dolly Parton')).toEqual(
+      'DOLYPARTNZXWVUSQMKJIHGFECB'.split('')
+    )
+  })
+})
 
 describe('normalizePersonName', () => {
   test('uppercases and strips spaces', () => {

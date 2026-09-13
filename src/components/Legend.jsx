@@ -1,11 +1,10 @@
 import { useMemo } from 'react'
 import { isLetter } from '../utils/cipher'
 
-function Legend({ ciphertext, distinctCipherLetters, guesses, selectedCipherLetter, onSelectCipherLetter }) {
+function Legend({ ciphertext, cipherSequence, guesses, selectedCipherLetter, onSelectCipherLetter }) {
   // How many times each cipher letter actually appears in the puzzle - a
-  // classic frequency-analysis aid. distinctCipherLetters is already
-  // alphabetical, so rendering counts in that same order satisfies "put
-  // them in alphabetical order" for free.
+  // classic frequency-analysis aid. Most of cipherSequence's 26 letters
+  // won't appear in a short quote at all, hence the || 0 fallback below.
   const letterCounts = useMemo(() => {
     const counts = {}
     for (const char of ciphertext) {
@@ -16,7 +15,7 @@ function Legend({ ciphertext, distinctCipherLetters, guesses, selectedCipherLett
 
   return (
     <div className="legend">
-      {distinctCipherLetters.map((cipherLetter) => (
+      {cipherSequence.map((cipherLetter) => (
         <button
           key={cipherLetter}
           type="button"
@@ -37,7 +36,7 @@ function Legend({ ciphertext, distinctCipherLetters, guesses, selectedCipherLett
           <span className="legend-guess">{guesses[cipherLetter] || ' '}</span>
           <span className="legend-cipher-row">
             <span className="legend-cipher">{cipherLetter}</span>
-            <span className="legend-count">{letterCounts[cipherLetter]}</span>
+            <span className="legend-count">{letterCounts[cipherLetter] || 0}</span>
           </span>
         </button>
       ))}

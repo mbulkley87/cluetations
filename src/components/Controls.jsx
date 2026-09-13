@@ -1,4 +1,17 @@
-function Controls({ canUndo, onUndo, onReset, onSubmit, onHint, hintActive, feedback }) {
+function Controls({
+  canUndo,
+  onUndo,
+  onReset,
+  onSubmit,
+  onYear,
+  yearRevealed,
+  onHint,
+  hintRevealed,
+  onGimme,
+  gimmeActive,
+  onCheckTrack,
+  feedback,
+}) {
   return (
     <div className="controls">
       <div className="controls-buttons">
@@ -8,12 +21,21 @@ function Controls({ canUndo, onUndo, onReset, onSubmit, onHint, hintActive, feed
         <button type="button" className="control-button" onClick={onReset}>
           ↻ Reset
         </button>
+        <button type="button" className="control-button" onClick={onYear} disabled={yearRevealed}>
+          📅 Year
+        </button>
+        <button type="button" className="control-button" onClick={onHint} disabled={hintRevealed}>
+          📖 Hint
+        </button>
         <button
           type="button"
-          className={['control-button', 'control-button-hint', hintActive ? 'control-button-hint-active' : ''].filter(Boolean).join(' ')}
-          onClick={onHint}
+          className={['control-button', 'control-button-gimme', gimmeActive ? 'control-button-gimme-active' : ''].filter(Boolean).join(' ')}
+          onClick={onGimme}
         >
-          💡 Hint
+          🎁 Gimme
+        </button>
+        <button type="button" className="control-button" onClick={onCheckTrack}>
+          🎯 On Track?
         </button>
         <button type="button" className="control-button control-button-submit" onClick={onSubmit}>
           Submit

@@ -16,6 +16,9 @@ const songs = [
     quote: 'Amazing grace, how sweet the sound, that saved a wretch like me. I once was lost, but now am found, was blind but now I see.',
     person: 'John Newton',
     work: 'Amazing Grace',
+    year: 1772,
+    hint: 'A hymn of redemption written by a former slave ship captain turned clergyman.',
+    difficulty: 'medium',
   },
   {
     id: 'songs-002',
@@ -23,6 +26,9 @@ const songs = [
     quote: 'Should auld acquaintance be forgot, and never brought to mind. Should auld acquaintance be forgot, and days of auld lang syne.',
     person: 'Robert Burns',
     work: 'Auld Lang Syne',
+    year: 1788,
+    hint: "A Scottish poem about old friendships, traditionally sung at New Year's.",
+    difficulty: 'medium',
   },
 ]
 

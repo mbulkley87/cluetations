@@ -8,6 +8,9 @@ const movies = [
     quote: "My mama always said life was like a box of chocolates. You never know what you're gonna get.",
     person: 'Tom Hanks',
     work: 'Forrest Gump',
+    year: 1994,
+    hint: 'A kind-hearted man with a low IQ recounts his improbable journey through decades of American history.',
+    difficulty: 'easy',
   },
   {
     id: 'movies-002',
@@ -15,6 +18,9 @@ const movies = [
     quote: 'No matter what anybody tells you, words and ideas can change the world.',
     person: 'Robin Williams',
     work: 'Dead Poets Society',
+    year: 1989,
+    hint: 'An unconventional teacher inspires his students to seize the day.',
+    difficulty: 'medium',
   },
   {
     id: 'movies-003',
@@ -22,6 +28,9 @@ const movies = [
     quote: "You don't want the truth because deep down in places you don't talk about at parties, you want me on that wall.",
     person: 'Jack Nicholson',
     work: 'A Few Good Men',
+    year: 1992,
+    hint: "Military lawyers uncover the truth behind a Marine's death at a Cuban base.",
+    difficulty: 'hard',
   },
 ]
 

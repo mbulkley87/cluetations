@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { encryptQuote, buildReverseCipherAlphabet, isLetter } from '../utils/cipher'
+import { encryptQuote, buildCipherSequence, buildReverseCipherAlphabet, isLetter } from '../utils/cipher'
 
 // One playthrough of a single puzzle: the plaintext, its cipher (derived
 // from the person's name - see src/utils/cipher.js), and every piece of
@@ -10,6 +10,13 @@ function useCryptogram(plaintext, person) {
   const upperPlaintext = useMemo(() => plaintext.toUpperCase(), [plaintext])
   const reverseCipher = useMemo(() => buildReverseCipherAlphabet(person), [person])
 
+  // All 26 cipher letters, in the exact order the legend displays them -
+  // the person's own unique letters first, then the reverse-alphabet
+  // leftovers (see buildCipherSequence). Most of these won't actually
+  // appear in a short quote, which is exactly why legend-mode navigation
+  // can't just be "positions in the quote" - see navigationMode below.
+  const cipherSequence = useMemo(() => buildCipherSequence(person), [person])
+
   // Every character index that's an actual letter (spaces/punctuation are
   // shown as-is and never selectable) - this is the order arrow keys/space
   // step through in "quote" navigation mode.
@@ -18,27 +25,28 @@ function useCryptogram(plaintext, person) {
     [ciphertext]
   )
 
-  // Every distinct cipher letter actually used in this puzzle, alphabetical -
-  // the legend's own display order, and what arrow keys step through in
-  // "legend" navigation mode.
-  const distinctCipherLetters = useMemo(() => {
-    const seen = new Set()
-    for (const char of ciphertext) {
-      if (isLetter(char)) seen.add(char)
-    }
-    return [...seen].sort()
-  }, [ciphertext])
-
   const [guesses, setGuesses] = useState({}) // cipherLetter -> guessed plaintext letter
   const [history, setHistory] = useState([]) // stack of previous guesses snapshots, for undo
+
+  // Quote-mode selection is a POSITION (so repeated letters in the quote
+  // are each their own stop while stepping through it). Legend-mode
+  // selection is a CIPHER LETTER directly, since most of the legend's 26
+  // entries have no position in the quote at all. navigationMode says
+  // which one is currently "live" - whichever area was last clicked.
   const [selectedPosition, setSelectedPosition] = useState(letterPositions[0] ?? null)
-  // Which sequence arrow keys/space/delete step through - set by whichever
-  // area (quote board or legend) was last clicked, so navigation always
-  // continues in that same area instead of jumping back to quote positions
-  // after a legend click.
+  const [selectedLegendLetter, setSelectedLegendLetter] = useState(null)
   const [navigationMode, setNavigationMode] = useState('quote') // 'quote' | 'legend'
 
-  const selectedCipherLetter = selectedPosition === null ? null : ciphertext[selectedPosition]
+  const selectedCipherLetter = navigationMode === 'legend'
+    ? selectedLegendLetter
+    : (selectedPosition === null ? null : ciphertext[selectedPosition])
+
+  // Which quote tile (if any) gets the solid "you clicked exactly this
+  // one" highlight - in legend mode that's the selected letter's first
+  // appearance in the quote, or none at all if it doesn't appear there.
+  const highlightPosition = navigationMode === 'legend'
+    ? (selectedLegendLetter === null ? null : ciphertext.indexOf(selectedLegendLetter))
+    : selectedPosition
 
   const pushHistory = useCallback(() => {
     setHistory((current) => [...current, guesses])
@@ -49,15 +57,10 @@ function useCryptogram(plaintext, person) {
     setSelectedPosition(position)
   }, [])
 
-  // Selecting from the legend still needs a tile to show as the "primary"
-  // highlight in the quote - the letter's first appearance reads as the
-  // natural anchor - but subsequent navigation stays within the legend's
-  // own letter sequence (see navigationMode).
   const selectCipherLetter = useCallback((cipherLetter) => {
     setNavigationMode('legend')
-    const firstIndex = ciphertext.indexOf(cipherLetter)
-    if (firstIndex !== -1) setSelectedPosition(firstIndex)
-  }, [ciphertext])
+    setSelectedLegendLetter(cipherLetter)
+  }, [])
 
   // A substitution must stay one-to-one: assigning a plaintext letter to a
   // cipher letter silently drops that same plaintext letter from whichever
@@ -86,7 +89,7 @@ function useCryptogram(plaintext, person) {
     })
   }, [pushHistory])
 
-  // Reveals the true answer for one cipher letter (the hint feature) -
+  // Reveals the true answer for one cipher letter (the "Gimme" feature) -
   // routed through setGuess so it's undo-able and still respects the
   // one-to-one constraint like any other guess.
   const revealHint = useCallback((cipherLetter) => {
@@ -96,14 +99,11 @@ function useCryptogram(plaintext, person) {
 
   const moveBy = useCallback((delta) => {
     if (navigationMode === 'legend') {
-      setSelectedPosition((current) => {
-        const currentCipherLetter = current === null ? null : ciphertext[current]
-        const currentIndex = distinctCipherLetters.indexOf(currentCipherLetter)
+      setSelectedLegendLetter((current) => {
+        const currentIndex = cipherSequence.indexOf(current)
         const baseIndex = currentIndex === -1 ? 0 : currentIndex
-        const nextIndex = Math.min(Math.max(baseIndex + delta, 0), distinctCipherLetters.length - 1)
-        const nextCipherLetter = distinctCipherLetters[nextIndex]
-        const firstIndexInQuote = ciphertext.indexOf(nextCipherLetter)
-        return firstIndexInQuote === -1 ? current : firstIndexInQuote
+        const nextIndex = Math.min(Math.max(baseIndex + delta, 0), cipherSequence.length - 1)
+        return cipherSequence[nextIndex]
       })
       return
     }
@@ -116,7 +116,7 @@ function useCryptogram(plaintext, person) {
       if (nextIndex >= letterPositions.length) return letterPositions[letterPositions.length - 1] ?? null
       return letterPositions[nextIndex]
     })
-  }, [navigationMode, distinctCipherLetters, ciphertext, letterPositions])
+  }, [navigationMode, cipherSequence, letterPositions])
 
   const moveNext = useCallback(() => moveBy(1), [moveBy])
   const movePrev = useCallback(() => moveBy(-1), [moveBy])
@@ -147,6 +147,7 @@ function useCryptogram(plaintext, person) {
     setHistory([])
     setGuesses({})
     setSelectedPosition(letterPositions[0] ?? null)
+    setSelectedLegendLetter(null)
     setNavigationMode('quote')
   }, [letterPositions])
 
@@ -166,18 +167,27 @@ function useCryptogram(plaintext, person) {
   // just documents that submit is a case-insensitive comparison per spec.
   const isCorrect = useMemo(() => guessedText === upperPlaintext, [guessedText, upperPlaintext])
 
+  // "Am I on the right track?" only judges what's actually been filled in -
+  // unguessed letters don't count against you, only wrong ones do.
+  const isOnTrack = useMemo(
+    () => Object.entries(guesses).every(([cipherLetter, plainLetter]) => reverseCipher[cipherLetter] === plainLetter),
+    [guesses, reverseCipher]
+  )
+
   return {
     plaintext: upperPlaintext,
     ciphertext,
     letterPositions,
-    distinctCipherLetters,
+    cipherSequence,
     guesses,
     guessedText,
-    selectedPosition,
+    selectedPosition: highlightPosition,
     selectedCipherLetter,
     canUndo: history.length > 0,
     isComplete,
     isCorrect,
+    isOnTrack,
+    hasGuesses: Object.keys(guesses).length > 0,
     selectPosition,
     selectCipherLetter,
     typeLetter,

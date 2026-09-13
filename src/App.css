@@ -30,6 +30,36 @@
   font-size: 15px;
 }
 
+.difficulty-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.difficulty-button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #cdd3dd;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.difficulty-button:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.difficulty-button-selected {
+  border-color: #ffd166;
+  background: rgba(255, 209, 102, 0.18);
+  color: #ffd166;
+}
+
 .genre-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(140px, 220px));
@@ -115,7 +145,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: center;
-  gap: 10px 14px;
+  gap: 14px 30px;
   padding: 28px 20px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
@@ -259,6 +289,8 @@
 
 .controls-buttons {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -321,6 +353,18 @@
   background: rgba(239, 71, 111, 0.15);
   color: #ffb6c6;
   border: 1px solid rgba(239, 71, 111, 0.4);
+}
+
+.controls-feedback-track-good {
+  background: rgba(101, 216, 141, 0.15);
+  color: #a4f0be;
+  border: 1px solid rgba(101, 216, 141, 0.4);
+}
+
+.controls-feedback-track-off {
+  background: rgba(255, 209, 102, 0.15);
+  color: #ffe2a6;
+  border: 1px solid rgba(255, 209, 102, 0.4);
 }
 
 @media (max-width: 480px) {
@@ -420,11 +464,11 @@
    HINT
 ====================================================== */
 
-.control-button-hint {
+.control-button-gimme {
   border-color: rgba(255, 209, 102, 0.5);
 }
 
-.control-button-hint-active {
+.control-button-gimme-active {
   border-color: #ffd166;
   background: rgba(255, 209, 102, 0.22);
   color: #ffd166;
@@ -432,6 +476,11 @@
 
 .hint-banner {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 10px 16px;
   border-radius: 10px;
   border: 1px solid rgba(255, 209, 102, 0.5);
@@ -439,6 +488,25 @@
   color: #ffe2a6;
   font-size: 13px;
   font-weight: 700;
+  text-align: center;
+}
+
+.hint-banner-cancel {
+  padding: 4px 12px;
+  font-size: 11px;
+}
+
+.reveal-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(101, 216, 141, 0.35);
+  background: rgba(101, 216, 141, 0.08);
+  color: #d7f5e2;
+  font-size: 13px;
   text-align: center;
 }
 

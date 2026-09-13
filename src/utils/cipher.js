@@ -26,7 +26,11 @@ export function normalizePersonName(person) {
 //                 just the letters not already used: Z X W V U S Q M K J I H G F E C B
 //   full sequence: D O L Y P A R T N Z X W V U S Q M K J I H G F E C B
 //   so A->D, B->O, C->L, D->Y, E->P, F->A, G->R, H->T, I->N, J->Z, ...
-export function buildCipherAlphabet(person) {
+//
+// Exposed on its own (not just folded into buildCipherAlphabet) because the
+// legend displays all 26 cipher letters in exactly this order - the
+// person's own unique letters first, then the reverse-alphabet leftovers.
+export function buildCipherSequence(person) {
   const normalized = normalizePersonName(person)
 
   const seen = new Set()
@@ -44,8 +48,11 @@ export function buildCipherAlphabet(person) {
     if (!seen.has(letter)) unusedReversed.push(letter)
   }
 
-  const cipherSequence = [...uniqueLetters, ...unusedReversed]
+  return [...uniqueLetters, ...unusedReversed]
+}
 
+export function buildCipherAlphabet(person) {
+  const cipherSequence = buildCipherSequence(person)
   const cipher = {}
   ALPHABET.forEach((letter, index) => {
     cipher[letter] = cipherSequence[index]

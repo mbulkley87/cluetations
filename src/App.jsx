@@ -10,11 +10,13 @@ import DebugPanel from './components/DebugPanel'
 import useCryptogram from './hooks/useCryptogram'
 import { CATEGORY_LABELS, pickRandomPuzzle } from './data/puzzles'
 
-function Puzzle({ category, onChangeGenre }) {
-  const [puzzle, setPuzzle] = useState(() => pickRandomPuzzle(category))
+function Puzzle({ category, difficulty, onChangeGenre }) {
+  const [puzzle, setPuzzle] = useState(() => pickRandomPuzzle(category, null, difficulty))
   const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
-  const [hintMode, setHintMode] = useState(false)
+  const [gimmeMode, setGimmeMode] = useState(false)
+  const [yearRevealed, setYearRevealed] = useState(false)
+  const [hintRevealed, setHintRevealed] = useState(false)
   const solved = feedback?.kind === 'correct'
   // Only ever shown while the decode is CURRENTLY correct - if the player
   // undoes back out of a correct decode after reaching this step, the box
@@ -36,9 +38,9 @@ function Puzzle({ category, onChangeGenre }) {
       } else if (key === 'Backspace' || key === 'Delete') {
         event.preventDefault()
         game.deleteAndMoveBack()
-      } else if (key === 'Escape' && hintMode) {
+      } else if (key === 'Escape' && gimmeMode) {
         event.preventDefault()
-        setHintMode(false)
+        setGimmeMode(false)
       } else if (/^[a-zA-Z]$/.test(key)) {
         event.preventDefault()
         game.typeLetter(key.toUpperCase())
@@ -47,21 +49,21 @@ function Puzzle({ category, onChangeGenre }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [game, solved, hintMode])
+  }, [game, solved, gimmeMode])
 
   function handleSelectPosition(position) {
-    if (hintMode) {
+    if (gimmeMode) {
       game.revealHint(game.ciphertext[position])
-      setHintMode(false)
+      setGimmeMode(false)
       return
     }
     game.selectPosition(position)
   }
 
   function handleSelectCipherLetter(cipherLetter) {
-    if (hintMode) {
+    if (gimmeMode) {
       game.revealHint(cipherLetter)
-      setHintMode(false)
+      setGimmeMode(false)
       return
     }
     game.selectCipherLetter(cipherLetter)
@@ -91,15 +93,30 @@ function Puzzle({ category, onChangeGenre }) {
     )
   }
 
+  function handleCheckTrack() {
+    // Only judges guesses actually made so far - unfilled letters never
+    // count against the player, only wrong ones do. Deliberately just two
+    // possible messages per spec, nothing more granular.
+    setFeedback(
+      game.isOnTrack
+        ? { kind: 'track-good', message: 'All good!' }
+        : { kind: 'track-off', message: 'Might want to revisit some things.' }
+    )
+  }
+
   function handleNewQuote() {
     setFeedback(null)
-    setHintMode(false)
-    setPuzzle((current) => pickRandomPuzzle(category, current.id))
+    setGimmeMode(false)
+    setYearRevealed(false)
+    setHintRevealed(false)
+    setPuzzle((current) => pickRandomPuzzle(category, current.id, difficulty))
   }
 
   function handleReset() {
     setFeedback(null)
-    setHintMode(false)
+    setGimmeMode(false)
+    setYearRevealed(false)
+    setHintRevealed(false)
     game.reset()
   }
 
@@ -132,8 +149,28 @@ function Puzzle({ category, onChangeGenre }) {
         />
       ) : (
         <>
-          {hintMode && (
-            <div className="hint-banner">Which letter do you want? Click any letter to reveal it.</div>
+          {(yearRevealed || hintRevealed) && (
+            <div className="reveal-info">
+              {yearRevealed && (
+                <div className="reveal-info-row">
+                  <strong>Year:</strong> {puzzle.year}
+                </div>
+              )}
+              {hintRevealed && (
+                <div className="reveal-info-row">
+                  <strong>Hint:</strong> {puzzle.hint}
+                </div>
+              )}
+            </div>
+          )}
+
+          {gimmeMode && (
+            <div className="hint-banner">
+              <span>Which letter do you want? Click any letter to reveal it.</span>
+              <button type="button" className="text-button hint-banner-cancel" onClick={() => setGimmeMode(false)}>
+                Cancel
+              </button>
+            </div>
           )}
 
           <QuoteBoard
@@ -146,7 +183,7 @@ function Puzzle({ category, onChangeGenre }) {
 
           <Legend
             ciphertext={game.ciphertext}
-            distinctCipherLetters={game.distinctCipherLetters}
+            cipherSequence={game.cipherSequence}
             guesses={game.guesses}
             selectedCipherLetter={game.selectedCipherLetter}
             onSelectCipherLetter={handleSelectCipherLetter}
@@ -157,8 +194,13 @@ function Puzzle({ category, onChangeGenre }) {
             onUndo={game.undo}
             onReset={handleReset}
             onSubmit={handleSubmit}
-            onHint={() => setHintMode((current) => !current)}
-            hintActive={hintMode}
+            onYear={() => setYearRevealed(true)}
+            yearRevealed={yearRevealed}
+            onHint={() => setHintRevealed(true)}
+            hintRevealed={hintRevealed}
+            onGimme={() => setGimmeMode((current) => !current)}
+            gimmeActive={gimmeMode}
+            onCheckTrack={handleCheckTrack}
             feedback={feedback?.kind && feedback.kind !== 'correct' ? feedback : null}
           />
 
@@ -172,13 +214,19 @@ function Puzzle({ category, onChangeGenre }) {
 }
 
 function App() {
-  const [category, setCategory] = useState(null)
+  const [selection, setSelection] = useState(null)
 
-  if (!category) {
-    return <GenreSelect onChoose={setCategory} />
+  if (!selection) {
+    return <GenreSelect onChoose={(category, difficulty) => setSelection({ category, difficulty })} />
   }
 
-  return <Puzzle category={category} onChangeGenre={() => setCategory(null)} />
+  return (
+    <Puzzle
+      category={selection.category}
+      difficulty={selection.difficulty}
+      onChangeGenre={() => setSelection(null)}
+    />
+  )
 }
 
 export default App
