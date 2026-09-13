@@ -1,24 +1,23 @@
 import books from './books'
 import movies from './movies'
 import speeches from './speeches'
+import songs from './songs'
 
 // The UI never imports a category file directly or cares how many puzzles
 // exist in it - this module is the entire data layer surface. Each
 // category file can grow toward ~300 entries independently without
 // touching anything else (a single component importing 1,200+ objects
 // directly is exactly what this indirection avoids).
-//
-// Songs was dropped as a category - copyrighted lyrics made it too hard to
-// find usable quotes that also covered the artist's own name letters.
-export const CATEGORIES = ['movies', 'speeches', 'books']
+export const CATEGORIES = ['movies', 'songs', 'speeches', 'books']
 
 export const CATEGORY_LABELS = {
   movies: 'Movies/Shows',
+  songs: 'Songs',
   speeches: 'Speeches',
   books: 'Books',
 }
 
-const PUZZLES_BY_CATEGORY = { movies, speeches, books }
+const PUZZLES_BY_CATEGORY = { movies, songs, speeches, books }
 
 export function getPuzzlesByCategory(category) {
   return PUZZLES_BY_CATEGORY[category] || []
