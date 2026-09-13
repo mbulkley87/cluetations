@@ -33,10 +33,11 @@ function GenreSelect({ onChoose, onDailyChallenge }) {
         ))}
       </div>
 
+      <button type="button" className="any-genre-button" onClick={() => onChoose('any', difficulty)}>
+        🎲 Any Genre
+      </button>
+
       <div className="genre-grid">
-        <button className="genre-button" onClick={() => onChoose('any', difficulty)}>
-          Any
-        </button>
         {CATEGORIES.map((category) => (
           <button key={category} className="genre-button" onClick={() => onChoose(category, difficulty)}>
             {CATEGORY_LABELS[category]}
