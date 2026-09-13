@@ -25,6 +25,12 @@ describe('normalizePersonName', () => {
   test('strips apostrophes and hyphens', () => {
     expect(normalizePersonName("O'Connor-Smith")).toBe('OCONNORSMITH')
   })
+
+  test('folds accented letters to their base form instead of dropping them', () => {
+    expect(normalizePersonName('Charlotte Brontë')).toBe('CHARLOTTEBRONTE')
+    expect(normalizePersonName('Antoine de Saint-Exupéry')).toBe('ANTOINEDESAINTEXUPERY')
+    expect(normalizePersonName('Gabriel García Márquez')).toBe('GABRIELGARCIAMARQUEZ')
+  })
 })
 
 describe('buildCipherAlphabet - worked example from spec (Dolly Parton)', () => {

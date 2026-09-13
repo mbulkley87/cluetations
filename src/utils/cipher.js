@@ -2,9 +2,18 @@ export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 // Uppercase, letters only - strips spaces, punctuation, apostrophes, and
 // hyphens so "J.R.R. Tolkien" and "Martin Luther King Jr." reduce to a
-// clean run of A-Z before the cipher is derived from them.
+// clean run of A-Z before the cipher is derived from them. Accented
+// letters are folded to their base form first (e.g. an author named
+// "e" with an acute accent becomes plain "E") rather than dropped
+// outright - decomposing to NFD splits an accented letter into the base
+// letter plus a separate combining accent mark (U+0300-U+036F), which the
+// final strip then removes cleanly, leaving the base letter behind.
 export function normalizePersonName(person) {
-  return person.toUpperCase().replace(/[^A-Z]/g, '')
+  return person
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '')
 }
 
 // The substitution alphabet for a puzzle is deterministic, derived from
