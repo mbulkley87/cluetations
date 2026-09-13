@@ -19,7 +19,14 @@ export const CATEGORY_LABELS = {
 
 const PUZZLES_BY_CATEGORY = { movies, songs, speeches, books }
 
+// 'any' isn't a real category - it's every puzzle from every category
+// combined, in a fixed order. Each puzzle already carries its own
+// `category` field, so the UI can still show which genre a specific
+// "any" puzzle came from without needing anything extra here.
+const ALL_PUZZLES = [...movies, ...songs, ...speeches, ...books]
+
 export function getPuzzlesByCategory(category) {
+  if (category === 'any') return ALL_PUZZLES
   return PUZZLES_BY_CATEGORY[category] || []
 }
 

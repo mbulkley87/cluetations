@@ -6,10 +6,12 @@ import Legend from './components/Legend'
 import Controls from './components/Controls'
 import AnswerBox from './components/AnswerBox'
 import SolvedReveal from './components/SolvedReveal'
+import DailyChallengeDone from './components/DailyChallengeDone'
 import DebugPanel from './components/DebugPanel'
 import useCryptogram from './hooks/useCryptogram'
 import { normalizePersonName } from './utils/cipher'
 import { triggerHaptic } from './utils/haptics'
+import { getDailyChallengePuzzle, isDailyChallengeComplete, markDailyChallengeComplete } from './utils/dailyChallenge'
 import { CATEGORY_LABELS, pickRandomPuzzle } from './data/puzzles'
 
 const CONFETTI = ['🎉', '✨', '🎊', '⭐', '✨', '🎉', '⭐', '🎊', '✨', '🎉', '⭐', '🎊']
@@ -21,25 +23,46 @@ const CONFETTI = ['🎉', '✨', '🎊', '⭐', '✨', '🎉', '⭐', '🎊', '�
 // selection state, and PuzzleGame's own feedback/gimmeMode/reveal state)
 // and mounts a fresh one, instead of reusing the old instance in place
 // with stale state left over from the previous quote.
+//
+// category === 'daily' is a distinct mode, not a real category: the
+// puzzle is deterministic (same for everyone, same calendar date), there
+// is no "New Quote" reshuffle, and a completed attempt is remembered
+// (localStorage) so revisiting the same day recaps it instead of handing
+// out a new attempt.
 function Puzzle({ category, difficulty, onChangeGenre }) {
-  const [puzzle, setPuzzle] = useState(() => pickRandomPuzzle(category, null, difficulty))
+  const isDaily = category === 'daily'
+  const [puzzle, setPuzzle] = useState(() =>
+    isDaily ? getDailyChallengePuzzle() : pickRandomPuzzle(category, null, difficulty)
+  )
 
   function handleNewQuote() {
     setPuzzle((current) => pickRandomPuzzle(category, current.id, difficulty))
+  }
+
+  if (isDaily && isDailyChallengeComplete(puzzle.id)) {
+    return (
+      <DailyChallengeDone
+        quote={puzzle.quote}
+        person={puzzle.person}
+        work={puzzle.work}
+        year={puzzle.year}
+        onChangeGenre={onChangeGenre}
+      />
+    )
   }
 
   return (
     <PuzzleGame
       key={puzzle.id}
       puzzle={puzzle}
-      category={category}
-      onNewQuote={handleNewQuote}
+      isDaily={isDaily}
+      onNewQuote={isDaily ? undefined : handleNewQuote}
       onChangeGenre={onChangeGenre}
     />
   )
 }
 
-function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
+function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
   const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
   const [gimmeMode, setGimmeMode] = useState(false)
@@ -161,6 +184,9 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
     // it already strips exactly this kind of formatting noise down to
     // bare letters.
     const isRightPerson = normalizePersonName(guess) === normalizePersonName(puzzle.person)
+    if (isRightPerson && isDaily) {
+      markDailyChallengeComplete(puzzle.id)
+    }
     setFeedback(
       isRightPerson
         ? { kind: 'correct' }
@@ -187,15 +213,23 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
     game.reset()
   }
 
+  // The genre label always comes from THIS puzzle's own category, not a
+  // fixed selection - identical to picking a specific genre directly, but
+  // also correct when the pool was "Any" (mixed categories) or the Daily
+  // Challenge (always mixed), where the actual category varies per puzzle.
+  const genreLabel = CATEGORY_LABELS[puzzle.category]
+
   return (
     <div className="puzzle-screen">
       <div className="puzzle-header">
-        <span className="puzzle-genre">{CATEGORY_LABELS[category]}</span>
+        <span className="puzzle-genre">{isDaily ? `🗓️ Daily · ${genreLabel}` : genreLabel}</span>
         {!solved && (
           <div className="puzzle-header-actions">
-            <button type="button" className="text-button" onClick={onNewQuote}>
-              New Quote
-            </button>
+            {onNewQuote && (
+              <button type="button" className="text-button" onClick={onNewQuote}>
+                New Quote
+              </button>
+            )}
             <button type="button" className="text-button" onClick={onChangeGenre}>
               Change Genre
             </button>
@@ -236,6 +270,7 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
           person={puzzle.person}
           work={puzzle.work}
           year={puzzle.year}
+          isDaily={isDaily}
           onNewQuote={onNewQuote}
           onChangeGenre={onChangeGenre}
         />
@@ -335,7 +370,12 @@ function App() {
   }, [])
 
   if (!selection) {
-    return <GenreSelect onChoose={(category, difficulty) => setSelection({ category, difficulty })} />
+    return (
+      <GenreSelect
+        onChoose={(category, difficulty) => setSelection({ category, difficulty })}
+        onDailyChallenge={() => setSelection({ category: 'daily', difficulty: null })}
+      />
+    )
   }
 
   return (

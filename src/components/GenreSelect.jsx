@@ -8,13 +8,17 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Hard' },
 ]
 
-function GenreSelect({ onChoose }) {
+function GenreSelect({ onChoose, onDailyChallenge }) {
   const [difficulty, setDifficulty] = useState(null)
 
   return (
     <div className="genre-select">
       <h1 className="game-title">ClueTations</h1>
       <p className="game-subtitle">Crack the quote. Pick where it's from.</p>
+
+      <button type="button" className="daily-challenge-button" onClick={onDailyChallenge}>
+        🗓️ Daily Challenge
+      </button>
 
       <div className="difficulty-row">
         {DIFFICULTIES.map((option) => (
@@ -30,6 +34,9 @@ function GenreSelect({ onChoose }) {
       </div>
 
       <div className="genre-grid">
+        <button className="genre-button" onClick={() => onChoose('any', difficulty)}>
+          Any
+        </button>
         {CATEGORIES.map((category) => (
           <button key={category} className="genre-button" onClick={() => onChoose(category, difficulty)}>
             {CATEGORY_LABELS[category]}
