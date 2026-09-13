@@ -5,7 +5,6 @@ function Controls({
   onSubmit,
   onGimme,
   gimmeActive,
-  onFill,
   onCheckTrack,
   feedback,
 }) {
@@ -24,9 +23,6 @@ function Controls({
           onClick={onGimme}
         >
           🎁 Gimme
-        </button>
-        <button type="button" className="control-button" onClick={onFill}>
-          🧩 Fill
         </button>
         <button type="button" className="control-button" onClick={onCheckTrack}>
           🎯 On Track?

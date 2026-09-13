@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { encryptQuote, buildCipherAlphabet, buildReverseCipherAlphabet, normalizePersonName, isLetter, ALPHABET } from '../utils/cipher'
+import { encryptQuote, buildCipherAlphabet, buildReverseCipherAlphabet, isLetter, ALPHABET } from '../utils/cipher'
 
 // One playthrough of a single puzzle: the plaintext, its cipher (derived
 // from the person's name - see src/utils/cipher.js), and every piece of
@@ -20,12 +20,6 @@ function useCryptogram(plaintext, person) {
   const upperPlaintext = useMemo(() => plaintext.toUpperCase(), [plaintext])
   const forwardCipher = useMemo(() => buildCipherAlphabet(person), [person])
   const reverseCipher = useMemo(() => buildReverseCipherAlphabet(person), [person])
-
-  // How many of the person's own unique letters lead the cipher sequence -
-  // plain letters before this count are "the name" (their cipher letter is
-  // part of what the player is meant to discover), plain letters from here
-  // to Z are just the mechanical reverse-alphabet remainder. Powers "Fill".
-  const nameLetterCount = useMemo(() => new Set(normalizePersonName(person)).size, [person])
 
   // Every character index that's an actual letter (spaces/punctuation are
   // shown as-is and never selectable) - this is the order arrow keys/space
@@ -135,23 +129,6 @@ function useCryptogram(plaintext, person) {
     const correctCipherLetter = forwardCipher[plainLetter]
     if (correctCipherLetter) setGuess(correctCipherLetter, plainLetter)
   }, [forwardCipher, setGuess])
-
-  // Instantly fills in every plain letter that ISN'T part of the person's
-  // name - those are just the mechanical reverse-alphabet remainder of the
-  // cipher, not something worth making the player grind through letter by
-  // letter. The name's own letters are deliberately left alone, since
-  // discovering those (by actually decoding the quote) is the point.
-  const fillRemaining = useCallback(() => {
-    pushHistory()
-    setGuesses((current) => {
-      const next = { ...current }
-      for (let i = nameLetterCount; i < ALPHABET.length; i++) {
-        const plainLetter = ALPHABET[i]
-        next[forwardCipher[plainLetter]] = plainLetter
-      }
-      return next
-    })
-  }, [pushHistory, nameLetterCount, forwardCipher])
 
   const moveBy = useCallback((delta) => {
     if (navigationMode === 'legend') {
@@ -309,7 +286,6 @@ function useCryptogram(plaintext, person) {
     deleteAndMoveBack,
     revealHint,
     revealPlainLetter,
-    fillRemaining,
     moveNext,
     movePrev,
     undo,

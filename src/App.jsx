@@ -224,7 +224,6 @@ function PuzzleGame({ puzzle, category, onNewQuote, onChangeGenre }) {
             onSubmit={handleSubmit}
             onGimme={() => setGimmeMode((current) => !current)}
             gimmeActive={gimmeMode}
-            onFill={game.fillRemaining}
             onCheckTrack={handleCheckTrack}
             feedback={feedback?.kind && feedback.kind !== 'correct' ? feedback : null}
           />
