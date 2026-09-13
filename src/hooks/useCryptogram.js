@@ -123,11 +123,52 @@ function useCryptogram(plaintext, person) {
   const moveNext = useCallback(() => moveBy(1), [moveBy])
   const movePrev = useCallback(() => moveBy(-1), [moveBy])
 
+  // Typing a letter advances to the next EMPTY box, not just the next one -
+  // otherwise stepping past a cipher letter that's already been solved
+  // (including other occurrences of the very letter just typed) means
+  // retyping over it instead of moving on. This computes the new guesses
+  // synchronously (rather than reading the `guesses` state, which won't
+  // reflect this update until the next render) so the very letter just
+  // assigned - and any other position sharing that cipher letter - is
+  // correctly treated as filled when picking where to jump next.
   const typeLetter = useCallback((plainLetter) => {
     if (selectedCipherLetter === null) return
-    setGuess(selectedCipherLetter, plainLetter)
-    moveNext()
-  }, [selectedCipherLetter, setGuess, moveNext])
+
+    pushHistory()
+    let nextGuesses
+    setGuesses((current) => {
+      const next = {}
+      for (const [existingCipherLetter, existingPlainLetter] of Object.entries(current)) {
+        if (existingPlainLetter === plainLetter && existingCipherLetter !== selectedCipherLetter) continue
+        next[existingCipherLetter] = existingPlainLetter
+      }
+      next[selectedCipherLetter] = plainLetter
+      nextGuesses = next
+      return next
+    })
+
+    if (navigationMode === 'legend') {
+      setSelectedLegendLetter((current) => {
+        const currentIndex = legendLetters.indexOf(current)
+        const baseIndex = currentIndex === -1 ? 0 : currentIndex
+        for (let i = baseIndex + 1; i < legendLetters.length; i++) {
+          if (!nextGuesses[legendLetters[i]]) return legendLetters[i]
+        }
+        return legendLetters[legendLetters.length - 1]
+      })
+      return
+    }
+
+    setSelectedPosition((current) => {
+      const currentIndex = letterPositions.indexOf(current)
+      const baseIndex = currentIndex === -1 ? 0 : currentIndex
+      for (let i = baseIndex + 1; i < letterPositions.length; i++) {
+        const position = letterPositions[i]
+        if (!nextGuesses[ciphertext[position]]) return position
+      }
+      return letterPositions[letterPositions.length - 1] ?? null
+    })
+  }, [selectedCipherLetter, pushHistory, navigationMode, legendLetters, letterPositions, ciphertext])
 
   const deleteAndMoveBack = useCallback(() => {
     if (selectedCipherLetter !== null) {

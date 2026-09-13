@@ -3,10 +3,6 @@ function Controls({
   onUndo,
   onReset,
   onSubmit,
-  onYear,
-  yearRevealed,
-  onHint,
-  hintRevealed,
   onGimme,
   gimmeActive,
   onCheckTrack,
@@ -20,12 +16,6 @@ function Controls({
         </button>
         <button type="button" className="control-button" onClick={onReset}>
           ↻ Reset
-        </button>
-        <button type="button" className="control-button" onClick={onYear} disabled={yearRevealed}>
-          📅 Year
-        </button>
-        <button type="button" className="control-button" onClick={onHint} disabled={hintRevealed}>
-          📖 Hint
         </button>
         <button
           type="button"
