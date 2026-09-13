@@ -3,6 +3,7 @@ import './App.css'
 import GenreSelect from './components/GenreSelect'
 import QuoteBoard from './components/QuoteBoard'
 import Legend from './components/Legend'
+import DecoderKey from './components/DecoderKey'
 import Controls from './components/Controls'
 import AnswerBox from './components/AnswerBox'
 import SolvedReveal from './components/SolvedReveal'
@@ -198,6 +199,8 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
             selectedCipherLetter={game.selectedCipherLetter}
             onSelectCipherLetter={handleSelectCipherLetter}
           />
+
+          <DecoderKey plainToCipher={game.plainToCipher} />
 
           <Controls
             canUndo={game.canUndo}

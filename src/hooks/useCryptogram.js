@@ -217,6 +217,21 @@ function useCryptogram(plaintext, person) {
     [guesses, reverseCipher]
   )
 
+  // The cipher is built FROM the person's name (see cipher.js), so reading
+  // solved letters in plain A-Z order eventually spells it out - that's
+  // the intended "aha" mechanic, not a leak: this is guesses inverted
+  // (plainLetter -> cipherLetter), so it only ever shows letters the
+  // player has actually solved. It's purely a derived view for a passive
+  // display; it doesn't drive the interactive Legend, which stays indexed
+  // by cipher letter so quote-tile-to-legend-cell highlighting still works.
+  const plainToCipher = useMemo(() => {
+    const map = {}
+    for (const [cipherLetter, plainLetter] of Object.entries(guesses)) {
+      map[plainLetter] = cipherLetter
+    }
+    return map
+  }, [guesses])
+
   return {
     plaintext: upperPlaintext,
     ciphertext,
@@ -224,6 +239,7 @@ function useCryptogram(plaintext, person) {
     legendLetters,
     guesses,
     guessedText,
+    plainToCipher,
     selectedPosition: highlightPosition,
     selectedCipherLetter,
     canUndo: history.length > 0,
