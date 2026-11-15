@@ -8,7 +8,7 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Hard' },
 ]
 
-function GenreSelect({ onChoose, onDailyChallenge }) {
+function GenreSelect({ onChoose, onDailyChallenge, onShowLeaderboard }) {
   const [difficulty, setDifficulty] = useState(null)
 
   return (
@@ -18,6 +18,10 @@ function GenreSelect({ onChoose, onDailyChallenge }) {
 
       <button type="button" className="daily-challenge-button" onClick={onDailyChallenge}>
         🗓️ Daily Challenge
+      </button>
+
+      <button type="button" className="leaderboard-entry-button" onClick={onShowLeaderboard}>
+        🏆 Leaderboard
       </button>
 
       <div className="difficulty-row">

@@ -8,11 +8,16 @@ import AnswerBox from './components/AnswerBox'
 import SolvedReveal from './components/SolvedReveal'
 import DailyChallengeDone from './components/DailyChallengeDone'
 import DebugPanel from './components/DebugPanel'
+import AccountWidget from './components/AccountWidget'
+import LoginModal from './components/LoginModal'
+import LeaderboardModal from './components/LeaderboardModal'
 import useCryptogram from './hooks/useCryptogram'
+import useAccount from './hooks/useAccount'
 import { normalizePersonName } from './utils/cipher'
 import { triggerHaptic } from './utils/haptics'
 import { getDailyChallengePuzzle, isDailyChallengeComplete, markDailyChallengeComplete } from './utils/dailyChallenge'
 import { CATEGORY_LABELS, pickRandomPuzzle } from './data/puzzles'
+import { submitScore } from './services/accountsApi'
 
 const CONFETTI = ['🎉', '✨', '🎊', '⭐', '✨', '🎉', '⭐', '🎊', '✨', '🎉', '⭐', '🎊']
 
@@ -29,7 +34,7 @@ const CONFETTI = ['🎉', '✨', '🎊', '⭐', '✨', '🎉', '⭐', '🎊', '�
 // is no "New Quote" reshuffle, and a completed attempt is remembered
 // (localStorage) so revisiting the same day recaps it instead of handing
 // out a new attempt.
-function Puzzle({ category, difficulty, onChangeGenre }) {
+function Puzzle({ category, difficulty, onChangeGenre, account }) {
   const isDaily = category === 'daily'
   const [puzzle, setPuzzle] = useState(() =>
     isDaily ? getDailyChallengePuzzle() : pickRandomPuzzle(category, null, difficulty)
@@ -58,11 +63,12 @@ function Puzzle({ category, difficulty, onChangeGenre }) {
       isDaily={isDaily}
       onNewQuote={isDaily ? undefined : handleNewQuote}
       onChangeGenre={onChangeGenre}
+      account={account}
     />
   )
 }
 
-function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
+function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre, account }) {
   const game = useCryptogram(puzzle.quote, puzzle.person)
   const [feedback, setFeedback] = useState(null)
   const [gimmeMode, setGimmeMode] = useState(false)
@@ -71,6 +77,8 @@ function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
   const [justCracked, setJustCracked] = useState(false)
   const wasCipherSolvedRef = useRef(false)
   const hiddenInputRef = useRef(null)
+  const startTimeRef = useRef(Date.now())
+  const hintsUsedRef = useRef(0)
   const solved = feedback?.kind === 'correct'
 
   // A physical keyboard's keydown events are the only way this game ever
@@ -156,6 +164,7 @@ function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
 
   function handleSelectPosition(position) {
     if (gimmeMode) {
+      hintsUsedRef.current += 1
       game.revealHint(game.ciphertext[position])
       setGimmeMode(false)
       return
@@ -166,6 +175,7 @@ function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
 
   function handleSelectLegendLetter(plainLetter) {
     if (gimmeMode) {
+      hintsUsedRef.current += 1
       game.revealPlainLetter(plainLetter)
       setGimmeMode(false)
       return
@@ -186,6 +196,17 @@ function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
     const isRightPerson = normalizePersonName(guess) === normalizePersonName(puzzle.person)
     if (isRightPerson && isDaily) {
       markDailyChallengeComplete(puzzle.id)
+    }
+    if (isRightPerson && account.token) {
+      const elapsedSeconds = Math.round((Date.now() - startTimeRef.current) / 1000)
+      // Rewards both speed and not leaning on Gimme - deliberately simple,
+      // easy to retune later without touching anything else (score is only
+      // ever submitted, never read back or relied on elsewhere).
+      const score = Math.max(0, 1000 - elapsedSeconds * 2 - hintsUsedRef.current * 40)
+      submitScore(account.token, 'cluetations', score).catch(() => {
+        // Best-effort - a failed leaderboard submission shouldn't block or
+        // confuse the win screen the player is about to see.
+      })
     }
     setFeedback(
       isRightPerson
@@ -353,6 +374,9 @@ function PuzzleGame({ puzzle, isDaily, onNewQuote, onChangeGenre }) {
 
 function App() {
   const [selection, setSelection] = useState(null)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false)
+  const account = useAccount()
 
   // Tactile feedback for every button in the app, delegated once at the
   // root rather than wired into each handler - covers genre/difficulty
@@ -369,21 +393,35 @@ function App() {
     return () => document.removeEventListener('click', handleGlobalClick)
   }, [])
 
-  if (!selection) {
-    return (
-      <GenreSelect
-        onChoose={(category, difficulty) => setSelection({ category, difficulty })}
-        onDailyChallenge={() => setSelection({ category: 'daily', difficulty: null })}
-      />
-    )
-  }
-
   return (
-    <Puzzle
-      category={selection.category}
-      difficulty={selection.difficulty}
-      onChangeGenre={() => setSelection(null)}
-    />
+    <>
+      <AccountWidget
+        isLoggedIn={account.isLoggedIn}
+        isChecking={account.isChecking}
+        username={account.username}
+        onSignIn={() => setLoginModalOpen(true)}
+        onSignOut={account.logout}
+      />
+      {loginModalOpen && (
+        <LoginModal onClose={() => setLoginModalOpen(false)} onLoginGuest={account.loginGuest} />
+      )}
+      {leaderboardOpen && <LeaderboardModal onClose={() => setLeaderboardOpen(false)} />}
+
+      {!selection ? (
+        <GenreSelect
+          onChoose={(category, difficulty) => setSelection({ category, difficulty })}
+          onDailyChallenge={() => setSelection({ category: 'daily', difficulty: null })}
+          onShowLeaderboard={() => setLeaderboardOpen(true)}
+        />
+      ) : (
+        <Puzzle
+          category={selection.category}
+          difficulty={selection.difficulty}
+          onChangeGenre={() => setSelection(null)}
+          account={account}
+        />
+      )}
+    </>
   )
 }
 

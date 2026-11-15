@@ -739,3 +739,223 @@
   outline: none;
   border-color: #ffd166;
 }
+
+/* ======================================================
+   ACCOUNT / LOGIN / LEADERBOARD
+====================================================== */
+
+.account-widget {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(18, 20, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(6px);
+}
+
+.account-widget-username {
+  font-size: 12px;
+  font-weight: 800;
+  color: #e7e9ee;
+  white-space: nowrap;
+}
+
+.leaderboard-entry-button {
+  margin-bottom: 18px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #cdd3dd;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, background 0.08s ease;
+}
+
+.leaderboard-entry-button:hover {
+  border-color: #ffd166;
+  color: #ffd166;
+}
+
+.leaderboard-entry-button:active {
+  transform: scale(0.95);
+  background: rgba(255, 209, 102, 0.12);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 9, 12, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(165deg, #1d212c, #14161d);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #cdd3dd;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+}
+
+.modal-close:hover {
+  border-color: #ffd166;
+  color: #ffd166;
+}
+
+.modal-close:active {
+  transform: scale(0.9);
+}
+
+.modal-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.modal-subtitle {
+  margin: 0 0 20px;
+  color: #9aa2b1;
+  font-size: 14px;
+}
+
+.login-guest-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-username-input {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e7e9ee;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.login-username-input:focus {
+  outline: none;
+  border-color: #ffd166;
+}
+
+.login-guest-submit {
+  width: 100%;
+}
+
+.login-error {
+  margin: 10px 0 0;
+  color: #ef476f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 14px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.login-provider-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: not-allowed;
+}
+
+.leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.leaderboard-rank {
+  width: 32px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #9aa2b1;
+}
+
+.leaderboard-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e7e9ee;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-score {
+  font-size: 15px;
+  font-weight: 900;
+  color: #ffd166;
+}
