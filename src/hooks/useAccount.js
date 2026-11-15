@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { loginAsGuest, fetchCurrentUser } from '../services/accountsApi'
+import { loginAsGuest, registerWithPassword, loginWithPassword, fetchCurrentUser } from '../services/accountsApi'
 
 const STORAGE_KEY = 'cluetations-account-session'
 
@@ -33,10 +33,12 @@ function useAccount() {
   const [checking, setChecking] = useState(Boolean(session))
 
   useEffect(() => {
-    if (!session) {
-      setChecking(false)
-      return
-    }
+    // No synchronous setState here even for the "no session" case - checking
+    // already starts false whenever session starts null (see useState
+    // above), and the only way session goes from set to null again is
+    // logout, which happens after a completed check already set checking
+    // to false in the .finally() below. So there's nothing to correct here.
+    if (!session) return
     let cancelled = false
     fetchCurrentUser(session.token)
       .then((user) => {
@@ -56,13 +58,16 @@ function useAccount() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.token])
 
-  const loginGuest = useCallback(async (username) => {
-    const result = await loginAsGuest(username)
+  function applySession(result) {
     const next = { token: result.token, userId: result.userId, username: result.username }
     setSession(next)
     writeStoredSession(next)
     return next
-  }, [])
+  }
+
+  const loginGuest = useCallback(async (username) => applySession(await loginAsGuest(username)), [])
+  const registerPassword = useCallback(async (username, password) => applySession(await registerWithPassword(username, password)), [])
+  const loginPassword = useCallback(async (username, password) => applySession(await loginWithPassword(username, password)), [])
 
   const logout = useCallback(() => {
     setSession(null)
@@ -75,6 +80,8 @@ function useAccount() {
     username: session?.username ?? null,
     token: session?.token ?? null,
     loginGuest,
+    registerPassword,
+    loginPassword,
     logout,
   }
 }

@@ -403,7 +403,12 @@ function App() {
         onSignOut={account.logout}
       />
       {loginModalOpen && (
-        <LoginModal onClose={() => setLoginModalOpen(false)} onLoginGuest={account.loginGuest} />
+        <LoginModal
+          onClose={() => setLoginModalOpen(false)}
+          onLoginGuest={account.loginGuest}
+          onRegisterPassword={account.registerPassword}
+          onLoginPassword={account.loginPassword}
+        />
       )}
       {leaderboardOpen && <LeaderboardModal onClose={() => setLeaderboardOpen(false)} />}
 

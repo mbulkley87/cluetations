@@ -19,6 +19,27 @@ export async function loginAsGuest(username) {
   return parseOrThrow(response)
 }
 
+// Unlike loginAsGuest, this identity CAN be logged back into later from any
+// browser - recommended over guest for anyone who wants their leaderboard
+// name to persist across devices.
+export async function registerWithPassword(username, password) {
+  const response = await fetch(`${BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  return parseOrThrow(response)
+}
+
+export async function loginWithPassword(username, password) {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  return parseOrThrow(response)
+}
+
 export async function fetchCurrentUser(token) {
   const response = await fetch(`${BASE_URL}/api/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },

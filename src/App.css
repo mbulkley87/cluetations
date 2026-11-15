@@ -850,6 +850,32 @@
   font-size: 14px;
 }
 
+.login-mode-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+}
+
+.login-mode-switch button {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #9aa2b1;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.login-mode-switch button.active {
+  background: linear-gradient(135deg, #ffd166, #ef476f);
+  color: #14161d;
+}
+
 .login-guest-form {
   display: flex;
   flex-direction: column;
