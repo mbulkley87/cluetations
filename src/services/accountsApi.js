@@ -5,7 +5,13 @@
 const BASE_URL = import.meta.env.VITE_ACCOUNTS_API_URL || 'https://accounts.matthewbulkley.com'
 
 async function parseOrThrow(response) {
-  if (response.ok) return response.status === 204 ? null : response.json()
+  if (response.ok) {
+    // Score submission returns 200 with an empty body, not 204 -
+    // response.json() throws SyntaxError on "", so check for actual
+    // content first rather than trusting the status code.
+    const text = await response.text()
+    return text ? JSON.parse(text) : null
+  }
   const message = await response.text().catch(() => '')
   throw new Error(message || `Request failed (${response.status})`)
 }
