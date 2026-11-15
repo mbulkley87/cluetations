@@ -1,12 +1,25 @@
 import { useCallback, useEffect, useState } from 'react'
 import { loginAsGuest, registerWithPassword, loginWithPassword, fetchCurrentUser } from '../services/accountsApi'
 
-const STORAGE_KEY = 'cluetations-account-session'
+// Shared across every subdomain of matthewbulkley.com (not just this game)
+// via a cookie scoped to the parent domain, instead of a per-app
+// localStorage key - logging in once on any game or the main dashboard now
+// carries over to all the others, since localStorage is isolated per
+// origin but a cookie with Domain=.matthewbulkley.com is readable by every
+// subdomain's JS. Cookie scoping also ignores port numbers, so this works
+// across each app's different localhost dev port too.
+const SESSION_COOKIE = 'mb_account_session'
+const SESSION_MAX_AGE = 60 * 60 * 24 * 35 // 35 days - longer than the 30-day token lifetime
+
+function cookieDomainAttr() {
+  const host = window.location.hostname
+  return host === 'localhost' || host === '127.0.0.1' ? '' : '; domain=.matthewbulkley.com'
+}
 
 function readStoredSession() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
+    const match = document.cookie.match(new RegExp(`(?:^|; )${SESSION_COOKIE}=([^;]*)`))
+    return match ? JSON.parse(decodeURIComponent(match[1])) : null
   } catch {
     return null
   }
@@ -14,13 +27,14 @@ function readStoredSession() {
 
 function writeStoredSession(session) {
   try {
+    const secureAttr = window.location.protocol === 'https:' ? '; secure' : ''
     if (session) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+      document.cookie = `${SESSION_COOKIE}=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${SESSION_MAX_AGE}${cookieDomainAttr()}${secureAttr}; samesite=lax`
     } else {
-      localStorage.removeItem(STORAGE_KEY)
+      document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0${cookieDomainAttr()}`
     }
   } catch {
-    // Private browsing / storage disabled / quota exceeded - harmless degradation, just can't persist.
+    // Private browsing / cookies disabled - harmless degradation, just can't persist.
   }
 }
 
