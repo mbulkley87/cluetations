@@ -13,7 +13,7 @@ const MODES = [
 // yet - both need an OAuth app registered in their own developer console
 // first. Shown disabled rather than hidden so the eventual real buttons
 // don't feel like a surprise new feature later.
-function LoginModal({ onClose, onLoginGuest, onRegisterPassword, onLoginPassword }) {
+function LoginModal({ onClose, onLoginGuest, onRegisterPassword, onLoginPassword, required = false }) {
   const [mode, setMode] = useState('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -68,7 +68,7 @@ function LoginModal({ onClose, onLoginGuest, onRegisterPassword, onLoginPassword
           ✕
         </button>
         <h2 className="modal-title">Sign In</h2>
-        <p className="modal-subtitle">Log in (or create an account) to appear on leaderboards.</p>
+        <p className="modal-subtitle">{required ? 'Sign in (or create an account) to play.' : 'Log in (or create an account) to appear on leaderboards.'}</p>
 
         <div className="login-mode-switch">
           {MODES.map((m) => (

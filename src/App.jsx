@@ -11,6 +11,7 @@ import DebugPanel from './components/DebugPanel'
 import AccountWidget from './components/AccountWidget'
 import LoginModal from './components/LoginModal'
 import LeaderboardModal from './components/LeaderboardModal'
+import HomeButton from './components/HomeButton'
 import useCryptogram from './hooks/useCryptogram'
 import useAccount from './hooks/useAccount'
 import { normalizePersonName } from './utils/cipher'
@@ -376,7 +377,30 @@ function App() {
   const [selection, setSelection] = useState(null)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
+  // A genre/daily-challenge choice made while signed out - resumed
+  // automatically once login completes (including instantly, via the
+  // shared session cookie, if already signed in elsewhere) instead of
+  // making the player pick again.
+  const [pendingSelection, setPendingSelection] = useState(null)
   const account = useAccount()
+
+  useEffect(() => {
+    if (account.isLoggedIn && pendingSelection) {
+      setSelection(pendingSelection)
+      setPendingSelection(null)
+      setLoginModalOpen(false)
+    }
+  }, [account.isLoggedIn, pendingSelection])
+
+  function handleChooseGenre(category, difficulty) {
+    if (account.isLoggedIn) setSelection({ category, difficulty })
+    else { setPendingSelection({ category, difficulty }); setLoginModalOpen(true) }
+  }
+
+  function handleChooseDaily() {
+    if (account.isLoggedIn) setSelection({ category: 'daily', difficulty: null })
+    else { setPendingSelection({ category: 'daily', difficulty: null }); setLoginModalOpen(true) }
+  }
 
   // Tactile feedback for every button in the app, delegated once at the
   // root rather than wired into each handler - covers genre/difficulty
@@ -395,6 +419,7 @@ function App() {
 
   return (
     <>
+      <HomeButton />
       <AccountWidget
         isLoggedIn={account.isLoggedIn}
         isChecking={account.isChecking}
@@ -404,6 +429,7 @@ function App() {
       />
       {loginModalOpen && (
         <LoginModal
+          required={Boolean(pendingSelection)}
           onClose={() => setLoginModalOpen(false)}
           onLoginGuest={account.loginGuest}
           onRegisterPassword={account.registerPassword}
@@ -414,8 +440,8 @@ function App() {
 
       {!selection ? (
         <GenreSelect
-          onChoose={(category, difficulty) => setSelection({ category, difficulty })}
-          onDailyChallenge={() => setSelection({ category: 'daily', difficulty: null })}
+          onChoose={handleChooseGenre}
+          onDailyChallenge={handleChooseDaily}
           onShowLeaderboard={() => setLeaderboardOpen(true)}
         />
       ) : (
